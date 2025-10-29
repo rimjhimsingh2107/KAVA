@@ -1,0 +1,214 @@
+{
+    "merchant": {
+      "id": 201,
+      "name": "Mixed Receipts"
+    },
+    "transactions": [
+      {
+        "id": "hd-001",
+        "external_id": "HD-ORDER-88231",
+        "datetime": "2025-08-10T14:22:00+00:00",
+        "url": "https://www.homedepot.com/order/HD-ORDER-88231",
+        "order_status": "DELIVERED",
+        "payment_methods": [
+          {
+            "external_id": "pm-1122",
+            "type": "CARD",
+            "brand": "VISA",
+            "last_four": "4421",
+            "transaction_amount": 1200.45
+          }
+        ],
+        "price": {
+          "sub_total": 1110.00,
+          "adjustments": [
+            { "type": "TAX", "label": "Sales Tax", "amount": 90.45 }
+          ],
+          "total": 1200.45,
+          "currency": "USD"
+        },
+        "products": [
+          {
+            "external_id": "HD-99121",
+            "name": "Whirlpool 4.5 cu. ft. High-Efficiency Washer",
+            "url": "https://www.homedepot.com/product/HD-99121",
+            "quantity": 1,
+            "eligibility": ["INSURABLE"],
+            "price": { "sub_total": 1110.00, "total": 1110.00, "unit_price": 1110.00 }
+          }
+        ]
+      },
+      {
+        "id": "hd-002",
+        "external_id": "HD-ORDER-88232",
+        "datetime": "2025-08-18T09:15:00+00:00",
+        "url": "https://www.homedepot.com/order/HD-ORDER-88232",
+        "order_status": "DELIVERED",
+        "payment_methods": [
+          {
+            "external_id": "pm-1123",
+            "type": "CARD",
+            "brand": "MASTERCARD",
+            "last_four": "5567",
+            "transaction_amount": 340.78
+          }
+        ],
+        "price": {
+          "sub_total": 315.00,
+          "adjustments": [
+            { "type": "TAX", "label": "Sales Tax", "amount": 25.78 }
+          ],
+          "total": 340.78,
+          "currency": "USD"
+        },
+        "products": [
+          {
+            "external_id": "HD-22019",
+            "name": "Hampton Bay Ceiling Fan with LED Light",
+            "url": "https://www.homedepot.com/product/HD-22019",
+            "quantity": 1,
+            "eligibility": ["INSURABLE"],
+            "price": { "sub_total": 315.00, "total": 315.00, "unit_price": 315.00 }
+          }
+        ]
+      },
+      {
+        "id": "amz-001",
+        "external_id": "AMZ-ORDER-44521",
+        "datetime": "2025-08-12T18:40:00+00:00",
+        "url": "https://www.amazon.com/order/AMZ-ORDER-44521",
+        "order_status": "DELIVERED",
+        "payment_methods": [
+          {
+            "external_id": "pm-2233",
+            "type": "CARD",
+            "brand": "MASTERCARD",
+            "last_four": "8899",
+            "transaction_amount": 249.99
+          }
+        ],
+        "price": {
+          "sub_total": 229.99,
+          "adjustments": [
+            { "type": "TAX", "label": "Sales Tax", "amount": 20.00 }
+          ],
+          "total": 249.99,
+          "currency": "USD"
+        },
+        "products": [
+          {
+            "external_id": "AMZ-8831",
+            "name": "Ring Video Doorbell Pro 2",
+            "url": "https://www.amazon.com/product/AMZ-8831",
+            "quantity": 1,
+            "eligibility": ["INSURABLE"],
+            "price": { "sub_total": 229.99, "total": 229.99, "unit_price": 229.99 }
+          }
+        ]
+      },
+      {
+        "id": "amz-002",
+        "external_id": "AMZ-ORDER-44522",
+        "datetime": "2025-08-20T13:10:00+00:00",
+        "url": "https://www.amazon.com/order/AMZ-ORDER-44522",
+        "order_status": "DELIVERED",
+        "payment_methods": [
+          {
+            "external_id": "pm-2234",
+            "type": "CARD",
+            "brand": "VISA",
+            "last_four": "3344",
+            "transaction_amount": 599.00
+          }
+        ],
+        "price": {
+          "sub_total": 560.00,
+          "adjustments": [
+            { "type": "TAX", "label": "Sales Tax", "amount": 39.00 }
+          ],
+          "total": 599.00,
+          "currency": "USD"
+        },
+        "products": [
+          {
+            "external_id": "AMZ-9932",
+            "name": "Dyson V11 Cordless Vacuum Cleaner",
+            "url": "https://www.amazon.com/product/AMZ-9932",
+            "quantity": 1,
+            "eligibility": ["INSURABLE"],
+            "price": { "sub_total": 560.00, "total": 560.00, "unit_price": 560.00 }
+          }
+        ]
+      },
+      {
+        "id": "wmt-001",
+        "external_id": "WMT-ORDER-55312",
+        "datetime": "2025-08-15T11:10:00+00:00",
+        "url": "https://www.walmart.com/order/WMT-ORDER-55312",
+        "order_status": "DELIVERED",
+        "payment_methods": [
+          {
+            "external_id": "pm-3344",
+            "type": "CARD",
+            "brand": "AMEX",
+            "last_four": "5678",
+            "transaction_amount": 679.00
+          }
+        ],
+        "price": {
+          "sub_total": 629.00,
+          "adjustments": [
+            { "type": "TAX", "label": "Sales Tax", "amount": 50.00 }
+          ],
+          "total": 679.00,
+          "currency": "USD"
+        },
+        "products": [
+          {
+            "external_id": "WMT-4489",
+            "name": "Serta Palisades Sofa, Charcoal Gray",
+            "url": "https://www.walmart.com/product/WMT-4489",
+            "quantity": 1,
+            "eligibility": ["INSURABLE"],
+            "price": { "sub_total": 629.00, "total": 629.00, "unit_price": 629.00 }
+          }
+        ]
+      },
+      {
+        "id": "wmt-002",
+        "external_id": "WMT-ORDER-55313",
+        "datetime": "2025-08-22T16:55:00+00:00",
+        "url": "https://www.walmart.com/order/WMT-ORDER-55313",
+        "order_status": "DELIVERED",
+        "payment_methods": [
+          {
+            "external_id": "pm-3345",
+            "type": "CARD",
+            "brand": "VISA",
+            "last_four": "1122",
+            "transaction_amount": 289.50
+          }
+        ],
+        "price": {
+          "sub_total": 270.00,
+          "adjustments": [
+            { "type": "TAX", "label": "Sales Tax", "amount": 19.50 }
+          ],
+          "total": 289.50,
+          "currency": "USD"
+        },
+        "products": [
+          {
+            "external_id": "WMT-9955",
+            "name": "Better Homes & Gardens 6-Drawer Dresser",
+            "url": "https://www.walmart.com/product/WMT-9955",
+            "quantity": 1,
+            "eligibility": ["INSURABLE"],
+            "price": { "sub_total": 270.00, "total": 270.00, "unit_price": 270.00 }
+          }
+        ]
+      }
+    ],
+    "next_cursor": null,
+    "limit": 6
+  }

@@ -1,0 +1,42 @@
+{
+  "name": "kava",
+  "version": "1.0.0",
+  "description": "AI-Powered Insurance Claim Validation System",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "ts-node src/index.ts",
+    "backend": "cd backend && python -m uvicorn main:app --reload --port 8000",
+    "frontend": "cd frontend && npm run dev",
+    "install-all": "npm install && cd backend && pip install -r requirements.txt && cd ../frontend && npm install"
+  },
+  "dependencies": {
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "ts-node": "^10.9.2",
+    "viem": "^2.0.0"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.3",
+    "@types/node": "^20",
+    "@types/react": "^18",
+    "@types/react-dom": "^18",
+    "eslint": "^8",
+    "eslint-config-next": "14.2.16",
+    "postcss": "^8",
+    "tailwindcss": "^3.4.1",
+    "typescript": "^5"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "keywords": [
+    "insurance",
+    "ai",
+    "blockchain",
+    "claims",
+    "eigencloud",
+    "knot"
+  ]
+}
