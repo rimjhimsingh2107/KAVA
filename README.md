@@ -315,4 +315,4 @@ This project showcases the power of combining AI validation with automated data 
 
 ## 📄 License
 
-MIT License - Built for HackMIT 2024
+MIT License - Built for HackMIT 2025
