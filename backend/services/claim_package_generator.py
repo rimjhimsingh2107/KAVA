@@ -235,7 +235,16 @@ async def generate_property_damage_photos_pdf(claim_packet) -> str:
     story.append(Spacer(1, 30))
     
     # Get all photo documents
-    photo_docs = [doc for doc in claim_packet.documents if doc.document_type.value == 'photo']
+    photo_docs = []
+    for photo_doc in claim_packet.documents:
+        doc_type = photo_doc.get('document_type') if isinstance(photo_doc, dict) else photo_doc.document_type
+        if isinstance(doc_type, dict):
+            doc_type = doc_type.get('value')
+        elif hasattr(doc_type, 'value'):
+            doc_type = doc_type.value
+        
+        if doc_type == 'photo':
+            photo_docs.append(photo_doc)
     
     if not photo_docs:
         story.append(Paragraph("No property damage photographs were submitted with this claim.", styles['Normal']))
@@ -246,31 +255,57 @@ async def generate_property_damage_photos_pdf(claim_packet) -> str:
         
         # Add each photo with description
         for idx, photo in enumerate(photo_docs, 1):
-            story.append(Paragraph(f"<b>Photograph #{idx}: {photo.filename}</b>", styles['Heading3']))
-            story.append(Paragraph(f"Upload Date: {photo.upload_timestamp.strftime('%B %d, %Y')}", styles['Normal']))
+            # Handle dict vs object
+            if isinstance(photo, dict):
+                filename = photo.get('filename', 'unknown.jpg')
+                upload_time = photo.get('upload_timestamp')
+                if isinstance(upload_time, str):
+                    from dateutil import parser
+                    upload_time = parser.parse(upload_time)
+                extracted_data = photo.get('extracted_data', {})
+                file_path = photo.get('file_path')
+                content = photo.get('content')
+            else:
+                filename = photo.filename
+                upload_time = photo.upload_timestamp
+                extracted_data = photo.extracted_data
+                file_path = getattr(photo, 'file_path', None)
+                content = getattr(photo, 'content', None)
+            
+            story.append(Paragraph(f"<b>Photograph #{idx}: {filename}</b>", styles['Heading3']))
+            story.append(Paragraph(f"Upload Date: {upload_time.strftime('%B %d, %Y')}", styles['Normal']))
             
             # Add damage description if available from OCR
-            if photo.extracted_data and photo.extracted_data.get('damage_type'):
-                story.append(Paragraph(f"Damage Type: {photo.extracted_data.get('damage_type', 'Not specified')}", styles['Normal']))
+            if extracted_data and extracted_data.get('damage_type'):
+                damage_types = extracted_data.get('damage_type', 'Not specified')
+                if isinstance(damage_types, list):
+                    damage_types = ', '.join(damage_types)
+                story.append(Paragraph(f"Damage Type: {damage_types}", styles['Normal']))
             
             story.append(Spacer(1, 10))
             
-            # Try to embed the actual image
+            # ACTUALLY EMBED THE IMAGE
             try:
-                if hasattr(photo, 'file_path') and photo.file_path and os.path.exists(photo.file_path):
-                    # Use actual image file
-                    img = RLImage(photo.file_path, width=5*inch, height=3.75*inch)
+                if file_path and os.path.exists(file_path):
+                    # Use actual image file - THIS WILL SHOW THE REAL PHOTO
+                    print(f"📸 Embedding image from: {file_path}")
+                    img = RLImage(file_path, width=6*inch, height=4.5*inch, kind='proportional')
                     story.append(img)
-                elif hasattr(photo, 'content') and photo.content:
+                    print(f"✅ Image embedded successfully: {filename}")
+                elif content:
                     # Use base64 encoded content
-                    img_data = base64.b64decode(photo.content)
+                    print(f"📸 Embedding image from base64 content")
+                    img_data = base64.b64decode(content)
                     img_buffer = BytesIO(img_data)
-                    img = RLImage(img_buffer, width=5*inch, height=3.75*inch)
+                    img = RLImage(img_buffer, width=6*inch, height=4.5*inch, kind='proportional')
                     story.append(img)
+                    print(f"✅ Image embedded from base64: {filename}")
                 else:
-                    story.append(Paragraph("[Image placeholder - Original file not available]", styles['Italic']))
+                    print(f"⚠️ No image source found for {filename}")
+                    story.append(Paragraph(f"[Image file path not available: {filename}]", styles['Italic']))
             except Exception as e:
-                story.append(Paragraph(f"[Image could not be embedded: {photo.filename}]", styles['Italic']))
+                print(f"❌ Image embedding error for {filename}: {e}")
+                story.append(Paragraph(f"[Could not embed image: {str(e)}]", styles['Italic']))
             
             story.append(Spacer(1, 20))
             
@@ -300,7 +335,16 @@ async def generate_itemized_inventory_pdf(claim_packet) -> str:
     story.append(Spacer(1, 30))
     
     # Get all receipts
-    receipt_docs = [doc for doc in claim_packet.documents if doc.document_type.value == 'receipt']
+    receipt_docs = []
+    for receipt_doc in claim_packet.documents:
+        doc_type = receipt_doc.get('document_type') if isinstance(receipt_doc, dict) else receipt_doc.document_type
+        if isinstance(doc_type, dict):
+            doc_type = doc_type.get('value')
+        elif hasattr(doc_type, 'value'):
+            doc_type = doc_type.value
+        
+        if doc_type == 'receipt':
+            receipt_docs.append(receipt_doc)
     
     if not receipt_docs:
         story.append(Paragraph("No itemized inventory data available. Please refer to contractor estimates for structural damage assessment.", styles['Normal']))
@@ -309,62 +353,150 @@ async def generate_itemized_inventory_pdf(claim_packet) -> str:
         inventory_data = [['Item Description', 'Purchase Date', 'Original Value', 'Condition']]
         total_value = 0
         
-        for receipt in receipt_docs:
-            if receipt.extracted_data:
-                items = receipt.extracted_data.get('items', [])
-                amount = receipt.extracted_data.get('total_amount', 0)
-                date = receipt.extracted_data.get('date', 'Unknown')
-                merchant = receipt.extracted_data.get('merchant', 'Unknown')
+        print(f"📊 Processing {len(receipt_docs)} receipts for inventory...")
+        
+        for idx, receipt in enumerate(receipt_docs):
+            # Handle dict vs object
+            if isinstance(receipt, dict):
+                extracted_data = receipt.get('extracted_data', {})
+            else:
+                extracted_data = receipt.extracted_data if hasattr(receipt, 'extracted_data') else {}
+            
+            print(f"📄 Receipt {idx+1}: extracted_data keys = {extracted_data.keys() if extracted_data else 'None'}")
+            
+            # Check if this is a MERGED receipt from Knot integration
+            if extracted_data and extracted_data.get("merged_receipts"):
+                print(f"   🔗 MERGED RECEIPT detected with {extracted_data.get('total_receipts', 0)} receipts")
+                
+                # Extract individual receipts from the merged receipt
+                individual_receipts = extracted_data.get("receipts", [])
+                for sub_receipt in individual_receipts:
+                    items = sub_receipt.get('items', [])
+                    amount = sub_receipt.get('total_amount', 0)
+                    date = sub_receipt.get('date', 'Unknown')
+                    merchant = sub_receipt.get('merchant', 'Unknown Merchant')
+                    
+                    # Handle amount conversions
+                    if isinstance(amount, str):
+                        try:
+                            amount = float(amount.replace('$', '').replace(',', ''))
+                        except:
+                            amount = 0
+                    elif amount is None:
+                        amount = 0
+                    else:
+                        amount = float(amount)
+                    
+                    print(f"      Sub-receipt: {merchant}, ${amount}, {len(items)} items")
+                    
+                    if amount > 0:
+                        if items and len(items) > 0:
+                            item_value = float(amount) / len(items)
+                            for item in items[:5]:
+                                inventory_data.append([
+                                    str(item)[:50],
+                                    str(date),
+                                    f"${item_value:,.2f}",
+                                    'Destroyed/Damaged'
+                                ])
+                                total_value += item_value
+                        else:
+                            inventory_data.append([
+                                f"Purchase from {merchant}",
+                                str(date),
+                                f"${amount:,.2f}",
+                                'Destroyed/Damaged'
+                            ])
+                            total_value += amount
+                continue
+            
+            # Handle REGULAR individual receipt
+            if extracted_data and isinstance(extracted_data, dict):
+                items = extracted_data.get('items', [])
+                amount = extracted_data.get('total_amount', 0)
+                date = extracted_data.get('date', 'Unknown')
+                merchant = extracted_data.get('merchant', 'Unknown Merchant')
                 
                 # Handle amount being a string with $
                 if isinstance(amount, str):
-                    amount = float(amount.replace('$', '').replace(',', ''))
+                    try:
+                        amount = float(amount.replace('$', '').replace(',', ''))
+                    except:
+                        amount = 0
+                elif amount is None:
+                    amount = 0
+                else:
+                    amount = float(amount)
                 
-                if items and len(items) > 0:
-                    for item in items[:3]:  # First 3 items per receipt
+                print(f"   Merchant: {merchant}, Amount: ${amount}, Items: {len(items) if items else 0}")
+                
+                # Only add if we have valid data
+                if amount > 0:
+                    if items and len(items) > 0:
+                        item_value = float(amount) / len(items)
+                        for item in items[:5]:  # First 5 items per receipt
+                            inventory_data.append([
+                                str(item)[:50],
+                                str(date),
+                                f"${item_value:,.2f}",
+                                'Destroyed/Damaged'
+                            ])
+                            total_value += item_value
+                    else:
+                        # No itemized list, add whole receipt as one line
                         inventory_data.append([
-                            str(item)[:40],
+                            f"Purchase from {merchant}",
                             str(date),
-                            f"${float(amount)/len(items):,.2f}",
+                            f"${amount:,.2f}",
                             'Destroyed/Damaged'
                         ])
-                        total_value += float(amount)/len(items)
+                        total_value += amount
                 else:
-                    inventory_data.append([
-                        f"Items from {merchant}",
-                        str(date),
-                        f"${amount:,.2f}",
-                        'Destroyed/Damaged'
-                    ])
-                    total_value += amount
+                    print(f"   ⚠️ Skipping receipt with $0 amount")
+            else:
+                print(f"   ⚠️ Receipt {idx+1} has no valid extracted_data")
         
-        # Add total row
-        inventory_data.append(['<b>TOTAL DOCUMENTED VALUE</b>', '', f'<b>${total_value:,.2f}</b>', ''])
+        print(f"💰 Total inventory value: ${total_value:,.2f}")
         
-        inventory_table = Table(inventory_data, colWidths=[2.5*inch, 1.5*inch, 1.2*inch, 1.3*inch])
-        inventory_table.setStyle(TableStyle([
-            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#1a365d')),
-            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
-            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-            ('BACKGROUND', (0, -1), (-1, -1), colors.lightgrey),
-            ('FONTNAME', (0, -1), (-1, -1), 'Helvetica-Bold'),
-            ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
-            ('ALIGN', (2, 1), (2, -1), 'RIGHT'),
-            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-            ('TOPPADDING', (0, 0), (-1, -1), 6),
-            ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
-        ]))
-        
-        story.append(inventory_table)
-        story.append(Spacer(1, 20))
-        
-        # Note
-        note_text = """
-        <b>Note:</b> This inventory represents documented items with available receipts. Additional items without 
-        receipts may be listed in supplemental documentation. All values represent original purchase price. 
-        Depreciation and actual cash value will be calculated by the insurance adjuster.
-        """
-        story.append(Paragraph(note_text, styles['Normal']))
+        # Check if we actually added any items
+        if len(inventory_data) == 1:  # Only header row
+            story.append(Paragraph("<b>No detailed itemized data available.</b>", styles['Normal']))
+            story.append(Spacer(1, 10))
+            story.append(Paragraph(
+                "Receipts were processed but did not contain itemized purchase information. "
+                "The total claim amount and individual receipts are documented in the Purchase Receipts section (Section 5). "
+                "For detailed item valuation, please refer to contractor estimates and damage assessment reports.",
+                styles['Normal']
+            ))
+        else:
+            # Add total row
+            inventory_data.append(['<b>TOTAL DOCUMENTED VALUE</b>', '', f'<b>${total_value:,.2f}</b>', ''])
+            
+            # Render the table only if we have data
+            inventory_table = Table(inventory_data, colWidths=[2.5*inch, 1.5*inch, 1.2*inch, 1.3*inch])
+            inventory_table.setStyle(TableStyle([
+                ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#1a365d')),
+                ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+                ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                ('BACKGROUND', (0, -1), (-1, -1), colors.lightgrey),
+                ('FONTNAME', (0, -1), (-1, -1), 'Helvetica-Bold'),
+                ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
+                ('ALIGN', (2, 1), (2, -1), 'RIGHT'),
+                ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+                ('TOPPADDING', (0, 0), (-1, -1), 6),
+                ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
+            ]))
+            
+            story.append(inventory_table)
+            story.append(Spacer(1, 20))
+            
+            # Note
+            note_text = """
+            <b>Note:</b> This inventory represents documented items with available receipts. Additional items without 
+            receipts may be listed in supplemental documentation. All values represent original purchase price. 
+            Depreciation and actual cash value will be calculated by the insurance adjuster.
+            """
+            story.append(Paragraph(note_text, styles['Normal']))
     
     doc.build(story)
     return pdf_path
@@ -389,7 +521,16 @@ async def generate_receipts_compilation_pdf(claim_packet) -> str:
     story.append(Spacer(1, 30))
     
     # Get all receipts
-    receipt_docs = [doc for doc in claim_packet.documents if doc.document_type.value == 'receipt']
+    receipt_docs = []
+    for receipt_doc in claim_packet.documents:
+        doc_type = receipt_doc.get('document_type') if isinstance(receipt_doc, dict) else receipt_doc.document_type
+        if isinstance(doc_type, dict):
+            doc_type = doc_type.get('value')
+        elif hasattr(doc_type, 'value'):
+            doc_type = doc_type.value
+        
+        if doc_type == 'receipt':
+            receipt_docs.append(receipt_doc)
     
     if not receipt_docs:
         story.append(Paragraph("No purchase receipts were submitted with this claim.", styles['Normal']))
@@ -399,18 +540,24 @@ async def generate_receipts_compilation_pdf(claim_packet) -> str:
         
         # Add each receipt
         for idx, receipt in enumerate(receipt_docs, 1):
+            # Handle dict vs object
+            if isinstance(receipt, dict):
+                extracted_data = receipt.get('extracted_data', {})
+            else:
+                extracted_data = receipt.extracted_data if hasattr(receipt, 'extracted_data') else {}
+            
             story.append(Paragraph(f"<b>Receipt #{idx}</b>", styles['Heading3']))
             
-            if receipt.extracted_data:
+            if extracted_data:
                 receipt_info = [
-                    ['Merchant:', receipt.extracted_data.get('merchant', 'Unknown')],
-                    ['Date:', str(receipt.extracted_data.get('date', 'Unknown'))],
-                    ['Amount:', f"${receipt.extracted_data.get('total_amount', 0):,.2f}" if isinstance(receipt.extracted_data.get('total_amount'), (int, float)) else str(receipt.extracted_data.get('total_amount', '$0.00'))],
-                    ['Payment Method:', receipt.extracted_data.get('payment_method', 'Unknown')],
+                    ['Merchant:', extracted_data.get('merchant', 'Unknown')],
+                    ['Date:', str(extracted_data.get('date', 'Unknown'))],
+                    ['Amount:', f"${extracted_data.get('total_amount', 0):,.2f}" if isinstance(extracted_data.get('total_amount'), (int, float)) else str(extracted_data.get('total_amount', '$0.00'))],
+                    ['Payment Method:', extracted_data.get('payment_method', 'Unknown')],
                 ]
                 
-                if receipt.extracted_data.get('items'):
-                    items_list = '<br/>'.join([f"• {item}" for item in receipt.extracted_data['items'][:5]])
+                if extracted_data.get('items'):
+                    items_list = '<br/>'.join([f"• {item}" for item in extracted_data['items'][:5]])
                     receipt_info.append(['Items:', items_list])
                 
                 info_table = Table(receipt_info, colWidths=[1.5*inch, 4.5*inch])
@@ -484,6 +631,9 @@ async def generate_comprehensive_claim_package(claim_packet, validation, generat
         # 6. Copy Fire Department Reports and ALL user documents
         print("🚒 Including all user documents...")
         
+        receipt_counter = 0
+        report_counter = 0
+        
         # Organize all documents by type
         for doc in claim_packet.documents:
             # Get file_path (handle both dict and object)
@@ -498,25 +648,39 @@ async def generate_comprehensive_claim_package(claim_packet, validation, generat
                 filename = doc.filename
                 doc_type = doc.document_type.value if hasattr(doc.document_type, 'value') else str(doc.document_type)
             
-            # Skip if no file_path or file doesn't exist
-            if not file_path or not os.path.exists(file_path):
-                print(f"⚠️ Skipping {filename} - file not found at {file_path}")
-                continue
-            
-            # Determine destination folder
-            if doc_type == 'damage_report' or 'report' in filename.lower():
-                dest_folder = f"{temp_dir}/04_REPORTS"
-                os.makedirs(dest_folder, exist_ok=True)
-                dest_path = os.path.join(dest_folder, filename)
-                shutil.copy(file_path, dest_path)
-                print(f"📄 Copied report: {filename}")
-            elif doc_type == 'receipt' or 'receipt' in filename.lower():
+            # Handle receipts (including JSON receipts from Knot API)
+            if doc_type == 'receipt' or 'receipt' in filename.lower():
+                receipt_counter += 1
                 dest_folder = f"{temp_dir}/03_RECEIPTS"
                 os.makedirs(dest_folder, exist_ok=True)
-                dest_path = os.path.join(dest_folder, filename)
-                shutil.copy(file_path, dest_path)
-                print(f"📄 Copied receipt: {filename}")
-            elif 'estimate' in filename.lower() or 'contractor' in filename.lower():
+                
+                if file_path and os.path.exists(file_path):
+                    # Has actual file - copy it
+                    dest_path = os.path.join(dest_folder, filename)
+                    shutil.copy(file_path, dest_path)
+                    print(f"📄 Copied receipt: {filename}")
+                else:
+                    # No file (JSON receipt from Knot) - GENERATE PDF
+                    print(f"📄 Generating PDF for JSON receipt: {filename}")
+                    receipt_pdf = generate_individual_receipt_pdf(doc, claim_packet.claim_id, receipt_counter)
+                    dest_path = os.path.join(dest_folder, f"receipt_{receipt_counter}.pdf")
+                    shutil.copy(receipt_pdf, dest_path)
+                    print(f"✅ Generated receipt PDF: receipt_{receipt_counter}.pdf")
+                continue
+            
+            # Handle reports and estimates
+            if doc_type == 'damage_report' or 'report' in filename.lower() or 'estimate' in filename.lower() or 'contractor' in filename.lower():
+                report_counter += 1
+                dest_folder = f"{temp_dir}/04_REPORTS"
+                os.makedirs(dest_folder, exist_ok=True)
+                
+                if file_path and os.path.exists(file_path):
+                    dest_path = os.path.join(dest_folder, filename)
+                    shutil.copy(file_path, dest_path)
+                    print(f"📄 Copied report: {filename}")
+                else:
+                    print(f"⚠️ Report has no file: {filename}")
+                continue
                 dest_folder = f"{temp_dir}/04_REPORTS"
                 os.makedirs(dest_folder, exist_ok=True)
                 dest_path = os.path.join(dest_folder, filename)
@@ -632,3 +796,113 @@ Generated by: KAVA AI Claims Processing System
         if os.path.exists(temp_dir):
             shutil.rmtree(temp_dir)
         raise
+
+
+def generate_individual_receipt_pdf(receipt_data: dict, claim_id: str, receipt_num: int) -> str:
+    """Generate a PDF for a single receipt from JSON data (e.g., Knot API receipts)"""
+    os.makedirs("claim_packets/temp/individual_receipts", exist_ok=True)
+    pdf_path = f"claim_packets/temp/individual_receipts/receipt_{receipt_num}_{claim_id}.pdf"
+    
+    doc = SimpleDocTemplate(pdf_path, pagesize=letter, rightMargin=72, leftMargin=72,
+                           topMargin=72, bottomMargin=72)
+    styles = getSampleStyleSheet()
+    story = []
+    
+    # Title
+    title_style = ParagraphStyle('Title', parent=styles['Heading1'], fontSize=16, 
+                                 alignment=TA_CENTER, spaceAfter=20, textColor=colors.HexColor('#1a365d'))
+    story.append(Paragraph("PURCHASE RECEIPT", title_style))
+    story.append(Spacer(1, 20))
+    
+    # Extract data
+    if isinstance(receipt_data, dict):
+        extracted = receipt_data.get('extracted_data', {})
+    else:
+        extracted = receipt_data.extracted_data if hasattr(receipt_data, 'extracted_data') else {}
+    
+    merchant = extracted.get('merchant', 'Unknown Merchant')
+    date = extracted.get('date', 'Unknown Date')
+    amount = extracted.get('total_amount', 0)
+    items = extracted.get('items', [])
+    payment_method = extracted.get('payment_method', 'Unknown')
+    order_id = extracted.get('order_id', 'N/A')
+    
+    # Format amount
+    if isinstance(amount, str):
+        amount_str = amount
+        try:
+            amount_float = float(amount.replace('$', '').replace(',', ''))
+        except:
+            amount_float = 0
+    else:
+        amount_float = float(amount)
+        amount_str = f"${amount_float:,.2f}"
+    
+    # Receipt header
+    header_text = f"""
+    <b>{merchant}</b><br/>
+    Transaction Date: {date}<br/>
+    Order ID: {order_id}
+    """
+    story.append(Paragraph(header_text, styles['Normal']))
+    story.append(Spacer(1, 20))
+    
+    # Items table
+    if items and len(items) > 0:
+        story.append(Paragraph("<b>Items Purchased:</b>", styles['Heading3']))
+        story.append(Spacer(1, 10))
+        
+        items_data = [['Item Description', 'Price']]
+        item_price = amount_float / len(items) if len(items) > 0 else 0
+        
+        for item in items:
+            items_data.append([
+                str(item)[:60],
+                f"${item_price:,.2f}"
+            ])
+        
+        items_table = Table(items_data, colWidths=[4.5*inch, 1.5*inch])
+        items_table.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#1a365d')),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
+            ('ALIGN', (1, 1), (1, -1), 'RIGHT'),
+            ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+            ('TOPPADDING', (0, 0), (-1, -1), 8),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
+        ]))
+        
+        story.append(items_table)
+        story.append(Spacer(1, 20))
+    
+    # Total section
+    total_data = [
+        ['Payment Method:', payment_method],
+        ['<b>Total Amount:</b>', f'<b>{amount_str}</b>']
+    ]
+    
+    total_table = Table(total_data, colWidths=[4.5*inch, 1.5*inch])
+    total_table.setStyle(TableStyle([
+        ('BACKGROUND', (0, -1), (-1, -1), colors.lightgrey),
+        ('FONTNAME', (0, -1), (-1, -1), 'Helvetica-Bold'),
+        ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
+        ('ALIGN', (1, 0), (1, -1), 'RIGHT'),
+        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+        ('TOPPADDING', (0, 0), (-1, -1), 8),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
+    ]))
+    
+    story.append(total_table)
+    story.append(Spacer(1, 30))
+    
+    # Footer
+    footer_text = """
+    <i>This receipt was automatically retrieved via Knot API integration.<br/>
+    All transaction details are verified and authentic.</i>
+    """
+    story.append(Paragraph(footer_text, ParagraphStyle('Footer', parent=styles['Normal'], 
+                                                        fontSize=9, textColor=colors.grey)))
+    
+    doc.build(story)
+    return pdf_path

@@ -16,12 +16,10 @@ class DocumentProcessor:
         api_key = os.getenv("CLAUDE_API_KEY")
         if api_key:
             self.client = anthropic.Anthropic(api_key=api_key)
-            self.use_mock = False
-            print("Claude API initialized successfully")
+            print("✅ Claude API initialized successfully for document processing")
         else:
             self.client = None
-            self.use_mock = True
-            print("Warning: CLAUDE_API_KEY not set, using mock document processing")
+            print("❌ WARNING: CLAUDE_API_KEY not set - document processing will fail")
         
     async def process_document(self, content: bytes, filename: str) -> ClaimDocument:
         """Process uploaded document - FIXED to handle PDFs properly"""
@@ -119,8 +117,13 @@ class DocumentProcessor:
     async def _analyze_text_with_claude(self, text_content: str) -> Dict[str, Any]:
         """Analyze extracted text using Claude API"""
         
-        if self.use_mock or not self.client:
-            return self._mock_text_analysis(text_content)
+        if not self.client:
+            print("⚠️ Claude API not available - cannot process document")
+            return {
+                "document_type": "error",
+                "error": "Claude API key not configured",
+                "confidence": 0.0
+            }
         
         prompt = f"""Analyze this document text for insurance claim processing:
 
@@ -186,8 +189,19 @@ Return JSON:
                 }
                 
         except Exception as e:
-            print(f"Claude text analysis failed: {e}")
-            return self._mock_text_analysis(text_content)
+            print(f"❌ Claude text analysis failed: {e}")
+            print(f"❌ ERROR TYPE: {type(e).__name__}")
+            print(f"❌ This means Claude API is not working properly")
+            print(f"❌ Check your API credits at: https://console.anthropic.com/")
+            # Return error data instead of crashing
+            return {
+                "document_type": "claude_api_error",
+                "error": str(e),
+                "error_type": type(e).__name__,
+                "processing_method": "failed_claude_call",
+                "confidence": 0.0,
+                "message": "Claude API call failed - check credits and API key"
+            }
     
     async def _process_text_document(self, content: bytes) -> Dict[str, Any]:
         """Process plain text files"""
@@ -204,16 +218,6 @@ Return JSON:
                     "error": f"Text processing failed: {str(e)}",
                     "confidence": 0.1
                 }
-    
-    def _mock_text_analysis(self, text_content: str) -> Dict[str, Any]:
-        """Mock analysis for text documents"""
-        return {
-            "document_type": "text_document",
-            "extracted_text": text_content[:500],
-            "key_findings": ["Mock analysis of text document"],
-            "confidence": 0.5,
-            "processing_method": "mock_fallback"
-        }
     
     def _classify_document_type(self, filename: str, content: bytes) -> DocumentType:
         """Classify document type based on filename and content analysis"""
@@ -247,10 +251,15 @@ Return JSON:
         return DocumentType.OTHER
     
     async def _process_photo(self, content: bytes) -> Dict[str, Any]:
-        """Process images using Claude Vision - keeping original working method"""
+        """Process images using Claude Vision API"""
         
-        if self.use_mock or not self.client:
-            return self._mock_photo_analysis()
+        if not self.client:
+            print("⚠️ Claude API not available - cannot process photo")
+            return {
+                "document_type": "photo",
+                "error": "Claude API key not configured",
+                "confidence": 0.0
+            }
         
         # Detect image type
         if content.startswith(b'\x89PNG'):
@@ -311,20 +320,12 @@ Return JSON:
             if json_match:
                 return json.loads(json_match.group())
             else:
-                return self._mock_photo_analysis()
+                raise ValueError("No valid JSON found in Claude response")
                 
         except Exception as e:
-            print(f"Claude Vision API failed: {e}")
-            return self._mock_photo_analysis()
-    
-    def _mock_photo_analysis(self):
-        return {
-            "damage_type": ["fire", "smoke"],
-            "severity": "severe",
-            "affected_areas": ["structure"],
-            "photo_quality": "adequate",
-            "description": "Mock damage analysis"
-        }
+            print(f"❌ Claude Vision API failed: {e}")
+            # NO FALLBACK - Force real Claude API usage
+            raise Exception(f"Claude Vision API failed - real processing required: {e}")
     
     def _calculate_confidence(self, extracted_data: Dict[str, Any]) -> float:
         """Calculate confidence based on extraction quality"""

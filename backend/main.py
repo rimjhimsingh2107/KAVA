@@ -569,8 +569,6 @@ async def sync_receipts(request: Dict[str, Any]):
 @app.get("/")
 async def root():
     return {"message": "KAVA API is running"}
-async def root():
-    return {"message": "KAVA API is running"}
 
 @app.post("/api/sync-receipts")
 async def sync_receipts(request: Dict[str, Any]):
@@ -584,7 +582,7 @@ async def sync_receipts(request: Dict[str, Any]):
         
         # Load receipts from test file for demo
         import json
-        receipts_file = "/Users/rimjhim/Documents/GitHub/CopilotClaim/test_claims/receipts.json"
+        receipts_file = os.path.join(os.path.dirname(__file__), "../test_claims/receipts.json")
         
         try:
             with open(receipts_file, 'r') as f:
@@ -717,7 +715,9 @@ async def create_claim_packet(claim_data: Dict[str, Any]):
                 extracted_data=doc.get("extracted_data", {}),
                 confidence_score=doc.get("confidence_score", 0.5),
                 file_size=doc.get("file_size", 0),
-                upload_timestamp=datetime.now()
+                upload_timestamp=datetime.now(),
+                file_path=doc.get("file_path"),  # Preserve file_path from upload
+                content=doc.get("content")  # Preserve content if available
             ))
         
         # Create claim packet with proper structure
@@ -733,6 +733,30 @@ async def create_claim_packet(claim_data: Dict[str, Any]):
         )
         
         print(f"Claim packet created successfully: {claim_packet.claim_id}")
+        
+        # 💾 SAVE TO DATABASE
+        from database import ClaimRecord, SessionLocal
+        db = SessionLocal()
+        try:
+            claim_record = ClaimRecord(
+                claim_id=claim_packet.claim_id,
+                policy_number=claim_packet.policy_number,
+                claimant_name=claim_packet.claimant_name,
+                incident_date=claim_packet.incident_date,
+                property_address=claim_packet.property_address,
+                estimated_damage=claim_packet.estimated_damage,
+                status="packet_created",
+                documents=[doc.dict() if hasattr(doc, 'dict') else vars(doc) for doc in document_objects],
+                created_at=datetime.now()
+            )
+            db.add(claim_record)
+            db.commit()
+            print(f"💾 Claim saved to database: {claim_packet.claim_id}")
+        except Exception as db_error:
+            print(f"⚠️ Database save failed: {db_error}")
+            db.rollback()
+        finally:
+            db.close()
         
         # Generate initial PDF claim packet
         pdf_path = await generate_claim_packet_pdf(claim_packet)
@@ -852,6 +876,25 @@ async def enhanced_validation_loop(request: Dict[str, Any]):
         print(f"📈 Total Improvement: {total_improvement:+.1%}")
         print(f"🔄 Iterations: {iteration}")
         print(f"📄 Final Documents: {len(claim_packet.documents)}")
+        
+        # 💾 UPDATE DATABASE WITH VALIDATION RESULTS
+        from database import ClaimRecord, SessionLocal
+        db = SessionLocal()
+        try:
+            claim_record = db.query(ClaimRecord).filter(ClaimRecord.claim_id == claim_packet.claim_id).first()
+            if claim_record:
+                claim_record.status = "validated"
+                claim_record.validation_result = final_validation
+                claim_record.updated_at = datetime.now()
+                db.commit()
+                print(f"💾 Validation results saved to database")
+            else:
+                print(f"⚠️ Claim {claim_packet.claim_id} not found in database")
+        except Exception as db_error:
+            print(f"⚠️ Database update failed: {db_error}")
+            db.rollback()
+        finally:
+            db.close()
         
         return {
             "final_validation": final_validation,
@@ -991,10 +1034,20 @@ async def deep_reprocess_documents(claim_packet: ClaimPacket) -> ClaimPacket:
 async def generate_final_outputs(request: Dict[str, Any]):
     """Generate comprehensive claim package ZIP with all documents, attestation score, and proof card"""
     try:
-        claim_packet = ClaimPacket(**request.get("claim_packet", {}))
-        validation = ClaimValidation(**request.get("validation", {}))
+        # Get raw data first
+        claim_packet_data = request.get("claim_packet", {})
+        validation_data = request.get("validation", {})
+        
+        print(f"📥 Received generate_final_outputs request")
+        print(f"📦 Claim packet data keys: {claim_packet_data.keys()}")
+        print(f"✅ Validation data keys: {validation_data.keys()}")
+        
+        # Convert to Pydantic models
+        claim_packet = ClaimPacket(**claim_packet_data)
+        validation = ClaimValidation(**validation_data)
         
         print(f"🎁 Generating comprehensive claim package for {claim_packet.claim_id}")
+        print(f"📄 Number of documents: {len(claim_packet.documents)}")
         
         # Generate COMPREHENSIVE CLAIM PACKAGE (ZIP file with all documents)
         comprehensive_package_path = await generate_comprehensive_claim_package(
@@ -1052,6 +1105,25 @@ async def generate_final_outputs(request: Dict[str, Any]):
             }, f, indent=2)
         
         verification_url = f"http://localhost:8000/api/verify-proof/{claim_hash[:16]}"
+        
+        # 💾 UPDATE DATABASE WITH FINAL OUTPUTS
+        from database import ClaimRecord, SessionLocal
+        db = SessionLocal()
+        try:
+            claim_record = db.query(ClaimRecord).filter(ClaimRecord.claim_id == claim_packet.claim_id).first()
+            if claim_record:
+                claim_record.status = "completed"
+                claim_record.proof_card = proof_card
+                claim_record.updated_at = datetime.now()
+                db.commit()
+                print(f"💾 Final outputs saved to database")
+            else:
+                print(f"⚠️ Claim {claim_packet.claim_id} not found in database")
+        except Exception as db_error:
+            print(f"⚠️ Database update failed: {db_error}")
+            db.rollback()
+        finally:
+            db.close()
         
         return {
             "comprehensive_package_zip": comprehensive_package_path,
@@ -1154,12 +1226,56 @@ async def download_claim_packet(claim_id: str):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.get("/api/claim-status/{claim_id}")
+@app.get("/api/claims/{claim_id}/status")
 async def get_claim_status(claim_id: str):
-    """Get claim processing status"""
+    """Get claim processing status from database"""
     try:
-        # Implementation for claim status tracking
-        return {"claim_id": claim_id, "status": "processing"}
+        from database import ClaimRecord, SessionLocal
+        db = SessionLocal()
+        try:
+            claim_record = db.query(ClaimRecord).filter(ClaimRecord.claim_id == claim_id).first()
+            if not claim_record:
+                raise HTTPException(status_code=404, detail="Claim not found")
+            
+            return {
+                "claim_id": claim_record.claim_id,
+                "status": claim_record.status,
+                "claimant_name": claim_record.claimant_name,
+                "policy_number": claim_record.policy_number,
+                "estimated_damage": claim_record.estimated_damage,
+                "created_at": claim_record.created_at.isoformat(),
+                "updated_at": claim_record.updated_at.isoformat() if claim_record.updated_at else None,
+                "validation_score": claim_record.validation_result.get("overall_score") if claim_record.validation_result else None
+            }
+        finally:
+            db.close()
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/claims")
+async def list_claims(limit: int = 10, offset: int = 0):
+    """List all claims from database"""
+    try:
+        from database import ClaimRecord, SessionLocal
+        db = SessionLocal()
+        try:
+            claims = db.query(ClaimRecord).order_by(ClaimRecord.created_at.desc()).offset(offset).limit(limit).all()
+            
+            return {
+                "claims": [{
+                    "claim_id": claim.claim_id,
+                    "claimant_name": claim.claimant_name,
+                    "policy_number": claim.policy_number,
+                    "status": claim.status,
+                    "estimated_damage": claim.estimated_damage,
+                    "created_at": claim.created_at.isoformat()
+                } for claim in claims],
+                "total": db.query(ClaimRecord).count()
+            }
+        finally:
+            db.close()
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

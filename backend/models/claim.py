@@ -18,6 +18,8 @@ class Document(BaseModel):
     confidence_score: float
     file_size: int
     upload_timestamp: datetime
+    file_path: Optional[str] = None  # Path to the saved file on disk
+    content: Optional[str] = None  # Base64 encoded content if no file_path
 
 class ClaimDocument(BaseModel):
     id: str
