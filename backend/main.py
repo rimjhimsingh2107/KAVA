@@ -775,7 +775,7 @@ async def create_claim_packet(claim_data: Dict[str, Any]):
 
 @app.post("/api/validation-loop")
 async def enhanced_validation_loop(request: Dict[str, Any]):
-    """Enhanced AI Judge validation loop with progressive improvement bonuses"""
+    """Progressive validation - ALL 47 rules each time, claim improves to pass MORE rules"""
     try:
         claim_packet = ClaimPacket(**request.get("claim_packet", {}))
         max_iterations = 4
@@ -785,7 +785,7 @@ async def enhanced_validation_loop(request: Dict[str, Any]):
         iteration = 0
         
         print(f"🚀 Starting Progressive Validation Loop for claim {claim_packet.claim_id}")
-        print(f"🎯 Target: 80%+ score with progressive improvements")
+        print(f"🎯 Same 47 rules each iteration - claim improves to pass more!")
         
         while iteration < max_iterations:
             iteration += 1
@@ -794,149 +794,58 @@ async def enhanced_validation_loop(request: Dict[str, Any]):
             print(f"🔄 ITERATION {iteration}/{max_iterations}")
             print(f"{'='*60}")
             
-            # ITERATION-SPECIFIC ENHANCEMENT LOGIC
+            # ENHANCE THE CLAIM (so it passes more rules)
             original_doc_count = len(claim_packet.documents)
             
             if iteration == 2:
-                # ITERATION 2: Auto-enhance with Knot receipt integration
-                print("💳 ITERATION 2: Enhancing with Knot receipts + deep processing...")
+                print("💳 ITERATION 2: Adding Knot receipts to pass more rules...")
                 claim_packet = await auto_enhance_with_knot_receipts(claim_packet)
-                new_doc_count = len(claim_packet.documents)
-                print(f"📄 Enhanced: {original_doc_count} → {new_doc_count} documents")
+                print(f"📄 Documents: {original_doc_count} → {len(claim_packet.documents)}")
                 
             elif iteration == 3:
-                # ITERATION 3: Deep document reprocessing (only if iter 2 showed improvement)
-                print("🔍 ITERATION 3: Deep document reprocessing...")
+                print("🔍 ITERATION 3: Reprocessing documents for better quality...")
                 claim_packet = await deep_reprocess_documents(claim_packet)
                 
             elif iteration == 4:
-                # ITERATION 4: Final review (only if iter 3 showed improvement)
-                print("⚖️ ITERATION 4: Final comprehensive review...")
+                print("⚖️ ITERATION 4: Final review with all enhancements...")
             
-            # Run AI Judge analysis
-            base_validation = await ai_judge.evaluate_with_depth(claim_packet, iteration, previous_scores)
-            base_score = base_validation.overall_score
+            # EVALUATE AGAINST ALL 47 RULES (same rules, better claim)
+            validation = await ai_judge.evaluate_with_depth(claim_packet, iteration, previous_scores)
             
-            # Apply progressive improvement bonuses
-            if iteration == 1:
-                # Iteration 1: Pure baseline, no bonus
-                final_score = base_score
-                bonus_applied = 0
-                print(f"📊 Baseline Score: {base_score:.1%} (no bonus)")
+            current_score = validation.overall_score
+            rules_passed = len([r for r in validation.rules_evaluated if r.passed])
+            total_rules = len(validation.rules_evaluated)
             
-            elif iteration == 2:
-                # Iteration 2: 15% bonus on improvement from iteration 1
-                if previous_scores:
-                    improvement = base_score - previous_scores[0]
-                    bonus = improvement * 0.15 if improvement > 0 else 0
-                    final_score = min(base_score + bonus, 1.0)  # Cap at 100%
-                    bonus_applied = bonus
-                    print(f"📊 Base Score: {base_score:.1%}")
-                    print(f"💎 Improvement Bonus (+15%): +{bonus:.1%}")
-                    print(f"📊 Final Score: {final_score:.1%}")
-                else:
-                    final_score = base_score
-                    bonus_applied = 0
+            print(f"📊 Rules: {rules_passed}/{total_rules} passed = {current_score:.1%}")
             
-            elif iteration == 3:
-                # Iteration 3: 20% bonus on improvement from iteration 1
-                if len(previous_scores) >= 2:
-                    improvement = base_score - previous_scores[0]
-                    bonus = improvement * 0.20 if improvement > 0 else 0
-                    final_score = min(base_score + bonus, 1.0)
-                    bonus_applied = bonus
-                    print(f"📊 Base Score: {base_score:.1%}")
-                    print(f"💎 Improvement Bonus (+20%): +{bonus:.1%}")
-                    print(f"📊 Final Score: {final_score:.1%}")
-                else:
-                    final_score = base_score
-                    bonus_applied = 0
-            
-            elif iteration == 4:
-                # Iteration 4: 20% bonus on improvement from iteration 1
-                if len(previous_scores) >= 3:
-                    improvement = base_score - previous_scores[0]
-                    bonus = improvement * 0.20 if improvement > 0 else 0
-                    final_score = min(base_score + bonus, 1.0)
-                    bonus_applied = bonus
-                    print(f"📊 Base Score: {base_score:.1%}")
-                    print(f"💎 Final Bonus (+20%): +{bonus:.1%}")
-                    print(f"📊 Final Score: {final_score:.1%}")
-                else:
-                    final_score = base_score
-                    bonus_applied = 0
-            else:
-                final_score = base_score
-                bonus_applied = 0
-            
-            # Update validation with final score
-            base_validation.overall_score = final_score
-            
-            # Record iteration results
+            # Record results
             validation_history.append({
                 "iteration": iteration,
                 "analysis_depth": ai_judge._get_depth_name(iteration),
-                "base_score": base_score,
-                "bonus_applied": bonus_applied,
-                "score": final_score,
-                "improvement": (final_score - previous_scores[-1]) if previous_scores else 0,
-                "validation": base_validation.model_dump(),
+                "score": current_score,
+                "rules_passed": rules_passed,
+                "total_rules": total_rules,
+                "improvement": (current_score - previous_scores[-1]) if previous_scores else 0,
+                "validation": validation.model_dump(),
                 "documents_processed": len(claim_packet.documents)
             })
             
-            current_score = final_score
-            iteration_improvement = (current_score - previous_scores[-1]) if previous_scores else 0
-            
-            print(f"✅ Final Iteration Score: {current_score:.1%}")
-            
-            # SMART EXIT CONDITIONS
-            if iteration == 1:
-                # After baseline: Check if already 80%+
-                if current_score >= 0.8:
-                    print("🎉 EARLY SUCCESS: Baseline score ≥80%!")
-                    break
-                else:
-                    print(f"🔄 Baseline {current_score:.1%} < 80%, proceeding to enhancement...")
-                    
-            elif iteration == 2:
-                # After enhancement: Check if reached 80% OR no meaningful improvement
-                if current_score >= 0.8:
-                    print(f"🎉 TARGET REACHED: Score {current_score:.1%} ≥80%!")
-                    break
-                elif iteration_improvement < 0.05:  # Less than 5% improvement
-                    print(f"⚠️ Minimal improvement (+{iteration_improvement:.1%}), stopping here.")
-                    break
-                else:
-                    print(f"📈 Good improvement (+{iteration_improvement:.1%}), continuing to deep processing...")
-                    
-            elif iteration == 3:
-                # After deep processing: Check if reached 80% OR minimal improvement
-                if current_score >= 0.8:
-                    print(f"🎉 TARGET REACHED: Score {current_score:.1%} ≥80%!")
-                    break
-                elif iteration_improvement < 0.03:  # Less than 3% improvement
-                    print(f"⚠️ Minimal improvement (+{iteration_improvement:.1%}), stopping here.")
-                    break
-                else:
-                    print(f"📈 Improvement detected (+{iteration_improvement:.1%}), proceeding to final review...")
-                    
-            elif iteration == 4:
-                # Final iteration always stops
-                print("⚖️ Final review complete - validation loop finished.")
+            # EXIT CONDITIONS
+            if current_score >= 0.8:
+                print(f"🎉 TARGET: {current_score:.1%} ≥80%!")
                 break
             
             previous_scores.append(current_score)
+            
+            if iteration < max_iterations:
+                improvement_so_far = current_score - previous_scores[0] if len(previous_scores) > 1 else 0
+                print(f"🔄 Current {current_score:.1%}, improved {improvement_so_far:+.1%} total, continuing...")
         
         final_validation = validation_history[-1]["validation"]
-        total_improvement = (previous_scores[-1] - previous_scores[0]) if len(previous_scores) > 1 else 0
         
-        print(f"\n🏁 VALIDATION LOOP COMPLETE:")
-        print(f"📊 Final Score: {final_validation['overall_score']:.1%}")
-        print(f"📈 Total Improvement: {total_improvement:+.1%}")
-        print(f"🔄 Iterations: {iteration}")
-        print(f"📄 Final Documents: {len(claim_packet.documents)}")
+        print(f"\n🏁 COMPLETE: {final_validation['overall_score']:.1%} after {iteration} iterations")
         
-        # 💾 UPDATE DATABASE WITH VALIDATION RESULTS
+        # Save to database
         from database import ClaimRecord, SessionLocal
         db = SessionLocal()
         try:
@@ -946,11 +855,7 @@ async def enhanced_validation_loop(request: Dict[str, Any]):
                 claim_record.validation_result = final_validation
                 claim_record.updated_at = datetime.now()
                 db.commit()
-                print(f"💾 Validation results saved to database")
-            else:
-                print(f"⚠️ Claim {claim_packet.claim_id} not found in database")
         except Exception as db_error:
-            print(f"⚠️ Database update failed: {db_error}")
             db.rollback()
         finally:
             db.close()
@@ -959,16 +864,16 @@ async def enhanced_validation_loop(request: Dict[str, Any]):
             "final_validation": final_validation,
             "validation_history": validation_history,
             "iterations_completed": iteration,
-            "total_improvement": total_improvement,
+            "total_improvement": (previous_scores[-1] - previous_scores[0]) if len(previous_scores) > 1 else 0,
             "final_analysis_depth": ai_judge._get_depth_name(iteration),
-            "score_stabilized": True,
             "next_step": "generate_final_outputs"
         }
     except Exception as e:
-        print(f"❌ Enhanced validation loop error: {e}")
+        print(f"❌ Validation loop error: {e}")
         import traceback
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
+
 
 async def auto_enhance_with_knot_receipts(claim_packet: ClaimPacket) -> ClaimPacket:
     """Auto-enhance claim packet with Knot receipt integration (ITERATION 2)"""
