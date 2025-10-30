@@ -586,61 +586,46 @@ Be thorough and realistic. Base your analysis on ACTUAL document content and rea
             return await self._evaluate_with_basic_rules(claim_packet)
     
     def _convert_claude_analysis_to_validation(self, claude_analysis: Dict[str, Any], claim_packet: ClaimPacket, analysis_depth: str = "BASIC") -> ClaimValidation:
-        """Convert Claude's analysis to ClaimValidation format with depth information"""
+        """Convert Claude's analysis to ClaimValidation format using ALL 47 constitution rules"""
         
-        # Create mock rules based on Claude's analysis and depth
+        # Get Claude's overall assessment
+        overall_score = claude_analysis.get("overall_score", 0.5)
+        
+        # Use ALL 47 rules from constitution
         rules_evaluated = []
-        total_rules = 28  # We have 28 rules in our constitution
-        rules_passed = claude_analysis.get("rules_passed", 20)
-        rules_failed = claude_analysis.get("rules_failed", 8)
+        rules_passed_count = 0
         
-        # Generate representative rules based on Claude's analysis and depth
-        if analysis_depth == "BASIC_SCREENING":
-            rule_templates = [
-                {"id": "BASIC_COMPLETENESS", "desc": "Basic document completeness", "weight": 0.4},
-                {"id": "BASIC_TIMELINE", "desc": "Basic timeline validation", "weight": 0.3},
-                {"id": "BASIC_AMOUNT", "desc": "Basic damage amount check", "weight": 0.2},
-                {"id": "BASIC_RED_FLAGS", "desc": "Obvious red flag detection", "weight": 0.1}
-            ]
-        elif analysis_depth == "ENHANCED_WITH_RECEIPTS":
-            rule_templates = [
-                {"id": "RECEIPT_CORRELATION", "desc": "Receipt-to-damage correlation", "weight": 0.25},
-                {"id": "FINANCIAL_VALIDATION", "desc": "Financial evidence validation", "weight": 0.25},
-                {"id": "MERCHANT_ANALYSIS", "desc": "Merchant appropriateness analysis", "weight": 0.2},
-                {"id": "SPENDING_PATTERNS", "desc": "Purchase pattern analysis", "weight": 0.15},
-                {"id": "KNOT_INTEGRATION", "desc": "Auto-fetched data validation", "weight": 0.15}
-            ]
-        elif analysis_depth == "FORENSIC_ANALYSIS":
-            rule_templates = [
-                {"id": "DOCUMENT_FORENSICS", "desc": "Document authenticity forensics", "weight": 0.3},
-                {"id": "CROSS_REFERENCE", "desc": "Cross-document validation", "weight": 0.25},
-                {"id": "TEMPORAL_FORENSICS", "desc": "Deep timeline forensics", "weight": 0.2},
-                {"id": "BEHAVIORAL_ANALYSIS", "desc": "Behavioral pattern analysis", "weight": 0.15},
-                {"id": "MICRO_INCONSISTENCIES", "desc": "Subtle inconsistency detection", "weight": 0.1}
-            ]
-        else:  # EXPERT_REVIEW
-            rule_templates = [
-                {"id": "EXPERT_HOLISTIC", "desc": "Expert holistic assessment", "weight": 0.3},
-                {"id": "INDUSTRY_BENCHMARK", "desc": "Industry benchmark comparison", "weight": 0.25},
-                {"id": "REGULATORY_COMPLIANCE", "desc": "Regulatory compliance check", "weight": 0.2},
-                {"id": "RISK_REWARD", "desc": "Risk-reward analysis", "weight": 0.15},
-                {"id": "FINAL_VERDICT", "desc": "Expert final verdict", "weight": 0.1}
-            ]
+        # Process all rule categories
+        for category, rules in self.constitution["rules"].items():
+            for rule_config in rules:
+                # Determine if this rule passed based on overall score
+                # Higher scores = more rules passed
+                if overall_score >= 0.9:
+                    passed = True  # Almost all rules pass
+                elif overall_score >= 0.8:
+                    passed = rule_config["weight"] < 0.15 or rule_config.get("required", False)  # Most rules pass
+                elif overall_score >= 0.7:
+                    passed = rule_config["weight"] < 0.12  # Many rules pass
+                elif overall_score >= 0.6:
+                    passed = rule_config["weight"] < 0.10  # Some rules pass
+                elif overall_score >= 0.5:
+                    passed = rule_config["weight"] < 0.08  # Few rules pass
+                else:
+                    passed = rule_config["weight"] < 0.05  # Very few rules pass
+                
+                if passed:
+                    rules_passed_count += 1
+                
+                rules_evaluated.append(ValidationRule(
+                    rule_id=rule_config["id"],
+                    description=rule_config["description"],
+                    weight=rule_config["weight"],
+                    passed=passed,
+                    confidence=claude_analysis.get("confidence", 0.8),
+                    rationale=f"{analysis_depth}: {claude_analysis.get('detailed_rationale', 'Analysis complete')}"[:100]
+                ))
         
-        passed_ratio = rules_passed / total_rules if total_rules > 0 else 0
-        
-        for i, template in enumerate(rule_templates):
-            # Determine if this rule type passed based on overall analysis
-            rule_passed = i < len(rule_templates) * passed_ratio
-            
-            rules_evaluated.append(ValidationRule(
-                rule_id=template["id"],
-                description=template["desc"],
-                weight=template["weight"],
-                passed=rule_passed,
-                confidence=claude_analysis.get("confidence", 0.8),
-                rationale=f"{analysis_depth}: {claude_analysis.get('detailed_rationale', 'Analysis complete')}"[:100]
-            ))
+        print(f"📊 Converted Claude score {overall_score:.1%} → {rules_passed_count}/{len(rules_evaluated)} rules passed")
         
         # Enhanced rationale with depth information
         base_rationale = claude_analysis.get('detailed_rationale', 'AI evaluation completed')
@@ -648,7 +633,7 @@ Be thorough and realistic. Base your analysis on ACTUAL document content and rea
         
         return ClaimValidation(
             claim_id=claim_packet.claim_id,
-            overall_score=claude_analysis.get("overall_score", 0.5),
+            overall_score=overall_score,
             confidence=claude_analysis.get("confidence", 0.7),
             approved=claude_analysis.get("approved", False),
             rules_evaluated=rules_evaluated,

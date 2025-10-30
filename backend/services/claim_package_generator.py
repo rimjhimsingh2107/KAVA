@@ -394,7 +394,7 @@ async def generate_itemized_inventory_pdf(claim_packet) -> str:
                             item_value = float(amount) / len(items)
                             for item in items[:5]:
                                 inventory_data.append([
-                                    str(item)[:50],
+                                    Paragraph(str(item)[:35], styles["Normal"]),
                                     str(date),
                                     f"${item_value:,.2f}",
                                     'Destroyed/Damaged'
@@ -402,7 +402,7 @@ async def generate_itemized_inventory_pdf(claim_packet) -> str:
                                 total_value += item_value
                         else:
                             inventory_data.append([
-                                f"Purchase from {merchant}",
+                                Paragraph(f"Purchase from {merchant}", styles["Normal"]),
                                 str(date),
                                 f"${amount:,.2f}",
                                 'Destroyed/Damaged'
@@ -412,6 +412,48 @@ async def generate_itemized_inventory_pdf(claim_packet) -> str:
             
             # Handle REGULAR individual receipt
             if extracted_data and isinstance(extracted_data, dict):
+                # Check if this is Claude-processed format (from document_processor)
+                if 'extracted_amounts' in extracted_data:
+                    print(f"   📝 CLAUDE-PROCESSED receipt format detected")
+                    
+                    # Extract from Claude format
+                    amounts = extracted_data.get('extracted_amounts', [])
+                    dates = extracted_data.get('extracted_dates', [])
+                    merchant = extracted_data.get('merchant_or_agency', 'Unknown Merchant')
+                    findings = extracted_data.get('key_findings', [])
+                    
+                    # Get total amount (usually last in the list)
+                    amount = amounts[-1] if amounts else 0
+                    date = dates[0] if dates else 'Unknown'
+                    
+                    # Extract items from key_findings
+                    items = []
+                    for finding in findings:
+                        if 'purchase' in finding.lower() or 'total' in finding.lower():
+                            # Try to extract item names from findings
+                            pass  # Use findings as description
+                    
+                    print(f"   Merchant: {merchant}, Amount: ${amount}, Date: {date}")
+                    
+                    if amount > 0:
+                        # Clean and shorten the description
+                        item_description = findings[0] if findings else Paragraph(f"Purchase from {merchant}", styles["Normal"])
+                        # Remove extra details and keep it concise
+                        if 'Purchase of' in item_description:
+                            item_description = item_description.replace('Purchase of ', '')
+                        # Truncate to fit
+                        item_description = item_description[:35] + '...' if len(item_description) > 35 else item_description
+                        
+                        inventory_data.append([
+                            Paragraph(item_description, styles['Normal']),
+                            str(date),
+                            f"${amount:,.2f}",
+                            'Destroyed/\nDamaged'
+                        ])
+                        total_value += amount
+                    continue
+                
+                # Original format (from Knot API or manual)
                 items = extracted_data.get('items', [])
                 amount = extracted_data.get('total_amount', 0)
                 date = extracted_data.get('date', 'Unknown')
@@ -436,7 +478,7 @@ async def generate_itemized_inventory_pdf(claim_packet) -> str:
                         item_value = float(amount) / len(items)
                         for item in items[:5]:  # First 5 items per receipt
                             inventory_data.append([
-                                str(item)[:50],
+                                Paragraph(str(item)[:35], styles["Normal"]),
                                 str(date),
                                 f"${item_value:,.2f}",
                                 'Destroyed/Damaged'
@@ -445,7 +487,7 @@ async def generate_itemized_inventory_pdf(claim_packet) -> str:
                     else:
                         # No itemized list, add whole receipt as one line
                         inventory_data.append([
-                            f"Purchase from {merchant}",
+                            Paragraph(f"Purchase from {merchant}", styles["Normal"]),
                             str(date),
                             f"${amount:,.2f}",
                             'Destroyed/Damaged'
@@ -470,21 +512,24 @@ async def generate_itemized_inventory_pdf(claim_packet) -> str:
             ))
         else:
             # Add total row
-            inventory_data.append(['<b>TOTAL DOCUMENTED VALUE</b>', '', f'<b>${total_value:,.2f}</b>', ''])
+            inventory_data.append([Paragraph('<b>TOTAL DOCUMENTED VALUE</b>', styles['Normal']), '', f'<b>${total_value:,.2f}</b>', ''])
             
-            # Render the table only if we have data
-            inventory_table = Table(inventory_data, colWidths=[2.5*inch, 1.5*inch, 1.2*inch, 1.3*inch])
+            # Render the table with better column widths
+            inventory_table = Table(inventory_data, colWidths=[3.2*inch, 1.1*inch, 1.3*inch, 1.4*inch])
             inventory_table.setStyle(TableStyle([
                 ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#1a365d')),
                 ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
                 ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                ('FONTSIZE', (0, 0), (-1, 0), 11),
                 ('BACKGROUND', (0, -1), (-1, -1), colors.lightgrey),
                 ('FONTNAME', (0, -1), (-1, -1), 'Helvetica-Bold'),
                 ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
                 ('ALIGN', (2, 1), (2, -1), 'RIGHT'),
-                ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-                ('TOPPADDING', (0, 0), (-1, -1), 6),
-                ('BOTTOMPADDING', (0, 0), (-1, -1), 6),
+                ('VALIGN', (0, 0), (-1, -1), 'TOP'),
+                ('TOPPADDING', (0, 0), (-1, -1), 8),
+                ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
+                ('LEFTPADDING', (0, 0), (-1, -1), 6),
+                ('RIGHTPADDING', (0, 0), (-1, -1), 6),
             ]))
             
             story.append(inventory_table)
