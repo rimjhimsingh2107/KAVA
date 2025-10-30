@@ -73,6 +73,19 @@ MNEMONIC=your_eigencloud_mnemonic_phrase
 
 ### Installation Steps
 
+**QUICK START (Recommended):**
+```bash
+# Make scripts executable (first time only)
+chmod +x start.sh stop.sh status.sh
+
+# Start the entire system
+./start.sh
+
+# Open browser to http://localhost:3001
+```
+
+**Manual Setup:**
+
 1. **Install Backend Dependencies:**
    ```bash
    cd backend
@@ -106,6 +119,31 @@ MNEMONIC=your_eigencloud_mnemonic_phrase
    ```bash
    npm run build && npm start  # Runs on port 9000
    ```
+
+## 🎮 Project Management
+
+### **Start the System:**
+```bash
+./start.sh
+```
+Starts both backend (port 8000) and frontend (port 3001)
+
+### **Stop the System:**
+```bash
+./stop.sh
+```
+Safely stops all running servers
+
+### **Check Status:**
+```bash
+./status.sh
+```
+See if backend and frontend are running
+
+### **Access Points:**
+- Frontend: http://localhost:3001
+- Backend API: http://localhost:8000
+- API Docs: http://localhost:8000/docs
 
 ## 🔑 API Configuration
 
