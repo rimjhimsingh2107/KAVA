@@ -167,7 +167,7 @@ async def generate_proof_of_loss_pdf(claim_packet, validation) -> str:
         ['Structural Damage', f"${claim_packet.estimated_damage * 0.6:,.2f}"],
         ['Personal Property', f"${claim_packet.estimated_damage * 0.3:,.2f}"],
         ['Additional Living Expenses', f"${claim_packet.estimated_damage * 0.1:,.2f}"],
-        ['<b>TOTAL ESTIMATED LOSS</b>', f"<b>${claim_packet.estimated_damage:,.2f}</b>"]
+        [Paragraph('<b>TOTAL ESTIMATED LOSS</b>', styles['Normal']), Paragraph(f"<b>${claim_packet.estimated_damage:,.2f}</b>", styles['Normal'])]
     ]
     
     damage_table = Table(damage_summary, colWidths=[4*inch, 2*inch])
