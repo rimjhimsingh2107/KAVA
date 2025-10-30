@@ -1,6 +1,6 @@
-# KAVA - AI-Powered Insurance Claims Validation System
+# KAVA - AI-Powered Insurance Claims Generation
 
-A production-ready AI-powered insurance claim validation system that uses machine learning, computer vision, and blockchain technology to automatically assess insurance claims with real-time scoring, fraud detection, and secure attestation.
+A production-ready AI-powered insurance claim validation system that uses machine learning, computer vision, and blockchain technology to automatically generate insurance claims with real-time scoring, fraud detection, and secure attestation.
 
 ## 🚀 Features
 
