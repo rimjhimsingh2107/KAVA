@@ -261,11 +261,11 @@ export default function FinalOutputsStep({ onPrev, onDataUpdate, claimData }: Fi
               <div className="space-y-2 text-sm">
                 <div>
                   <span className="text-gray-600">Claim Hash:</span>
-                  <p className="font-mono text-xs break-all">{finalOutputs.proof_card?.claim_hash?.substring(0, 24)}...</p>
+                  <p className="font-mono text-xs break-all text-gray-900">{finalOutputs.proof_card?.claim_hash?.substring(0, 24)}...</p>
                 </div>
                 <div>
                   <span className="text-gray-600">ECDSA Signature:</span>
-                  <p className="font-mono text-xs break-all">{finalOutputs.proof_card?.ecdsa_signature?.substring(0, 24)}...</p>
+                  <p className="font-mono text-xs break-all text-gray-900">{finalOutputs.proof_card?.ecdsa_signature?.substring(0, 24)}...</p>
                 </div>
               </div>
               <a
@@ -286,19 +286,19 @@ export default function FinalOutputsStep({ onPrev, onDataUpdate, claimData }: Fi
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
               <div>
                 <span className="text-gray-600">Proof ID:</span>
-                <p className="font-mono">{finalOutputs.proof_id}</p>
+                <p className="font-mono text-gray-900">{finalOutputs.proof_id}</p>
               </div>
               <div>
                 <span className="text-gray-600">Verification URL:</span>
-                <p className="font-mono text-xs break-all">{finalOutputs.verification_url}</p>
+                <p className="font-mono text-xs break-all text-gray-900">{finalOutputs.verification_url}</p>
               </div>
               <div>
                 <span className="text-gray-600">Judge Score:</span>
-                <p className="font-bold">{(finalOutputs.proof_card?.judge_score * 100).toFixed(1)}%</p>
+                <p className="font-bold text-gray-900">{(finalOutputs.proof_card?.judge_score * 100).toFixed(1)}%</p>
               </div>
               <div>
                 <span className="text-gray-600">Rules Version:</span>
-                <p>{finalOutputs.proof_card?.validation_rules_version}</p>
+                <p className="text-gray-900">{finalOutputs.proof_card?.validation_rules_version}</p>
               </div>
             </div>
           </div>

@@ -199,17 +199,17 @@ export default function ValidationLoopStep({ onNext, onPrev, onDataUpdate, claim
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-sm">
                 <div>
                   <span className="text-gray-600">Rules Passed:</span>
-                  <p className="font-medium">
+                  <p className="font-medium text-gray-900">
                     {iteration.validation.rules_evaluated?.filter((r: any) => r.passed).length || 0} / {iteration.validation.rules_evaluated?.length || 0}
                   </p>
                 </div>
                 <div>
                   <span className="text-gray-600">Confidence:</span>
-                  <p className="font-medium">{(iteration.validation.confidence * 100).toFixed(1)}%</p>
+                  <p className="font-medium text-gray-900">{(iteration.validation.confidence * 100).toFixed(1)}%</p>
                 </div>
                 <div>
                   <span className="text-gray-600">Documents:</span>
-                  <p className="font-medium">{iteration.documents_processed || 'N/A'}</p>
+                  <p className="font-medium text-gray-900">{iteration.documents_processed || 'N/A'}</p>
                 </div>
                 <div>
                   <span className="text-gray-600">Status:</span>

@@ -174,7 +174,7 @@ export default function CreatePacketStep({ onNext, onPrev, onDataUpdate, claimDa
           value={formData.property_address}
           onChange={handleInputChange}
           rows={3}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500"
+          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-gray-900"
           placeholder="Enter full property address"
           required
         />
