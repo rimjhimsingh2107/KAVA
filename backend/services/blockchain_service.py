@@ -229,8 +229,11 @@ class BlockchainService:
     def generate_verification_url(self, tx_hash: str) -> str:
         """Generate verification URL for the transaction"""
         
+        # Get base URL from environment or use production URL
+        base_url = os.getenv("API_BASE_URL", "https://kava-backend.onrender.com")
+        
         if tx_hash.startswith("local_"):
-            return f"http://localhost:8000/api/verify-local/{tx_hash}"
+            return f"{base_url}/api/verify-local/{tx_hash}"
         else:
             return f"https://sepolia.etherscan.io/tx/{tx_hash}"
     
