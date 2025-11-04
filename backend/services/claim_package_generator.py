@@ -511,8 +511,14 @@ async def generate_itemized_inventory_pdf(claim_packet) -> str:
                 styles['Normal']
             ))
         else:
-            # Add total row
-            inventory_data.append([Paragraph('<b>TOTAL DOCUMENTED VALUE</b>', styles['Normal']), '', f'<b>${total_value:,.2f}</b>', ''])
+            # Add total row with bold formatting using Paragraph
+            bold_style = ParagraphStyle('Bold', parent=styles['Normal'], fontName='Helvetica-Bold')
+            inventory_data.append([
+                Paragraph('TOTAL DOCUMENTED VALUE', bold_style), 
+                '', 
+                Paragraph(f'${total_value:,.2f}', bold_style), 
+                ''
+            ])
             
             # Render the table with better column widths
             inventory_table = Table(inventory_data, colWidths=[3.2*inch, 1.1*inch, 1.3*inch, 1.4*inch])
