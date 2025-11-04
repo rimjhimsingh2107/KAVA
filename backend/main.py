@@ -1077,7 +1077,9 @@ async def generate_final_outputs(request: Dict[str, Any]):
                 "proof_type": "ECDSA_SHA256"
             }, f, indent=2)
         
-        verification_url = f"http://localhost:8000/api/verify-proof/{claim_hash[:16]}"
+        # Get base URL from environment or use production URL
+        base_url = os.getenv("API_BASE_URL", "https://kava-backend.onrender.com")
+        verification_url = f"{base_url}/api/verify-proof/{claim_hash[:16]}"
         
         # 💾 UPDATE DATABASE WITH FINAL OUTPUTS
         from database import ClaimRecord, SessionLocal
