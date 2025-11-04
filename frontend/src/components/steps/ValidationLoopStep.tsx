@@ -1,8 +1,11 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { getApiUrl } from '@/config/api';
 import { Shield, RefreshCw, CheckCircle, AlertTriangle, TrendingUp } from 'lucide-react';
+import { getApiUrl } from '@/config/api';
 import toast from 'react-hot-toast';
+import { getApiUrl } from '@/config/api';
 
 interface ValidationLoopStepProps {
   onNext: () => void;
@@ -42,7 +45,7 @@ export default function ValidationLoopStep({ onNext, onPrev, onDataUpdate, claim
 
       console.log('🔍 Sending validation request:', requestData);
 
-      const response = await fetch('http://localhost:8000/api/validation-loop', {
+      const response = await fetch(getApiUrl('/api/validation-loop'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

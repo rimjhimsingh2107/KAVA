@@ -1,10 +1,15 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { getApiUrl } from '@/config/api';
 import { motion } from 'framer-motion';
+import { getApiUrl } from '@/config/api';
 import { Shield, Download, ExternalLink, Copy, CheckCircle, ArrowLeft, Hash } from 'lucide-react';
+import { getApiUrl } from '@/config/api';
 import toast from 'react-hot-toast';
+import { getApiUrl } from '@/config/api';
 import axios from 'axios';
+import { getApiUrl } from '@/config/api';
 
 interface ProofGenerationProps {
   onPrev: () => void;
@@ -27,7 +32,7 @@ export default function ProofGeneration({ onPrev, onDataUpdate, claimData }: Pro
   const generateProof = async () => {
     setGenerating(true);
     try {
-      const response = await axios.post('http://localhost:8000/api/generate-proof', {
+      const response = await axios.post(getApiUrl('/api/generate-proof'), {
         claim_packet: claimData.claimPacket,
         validation: claimData.validation,
       });

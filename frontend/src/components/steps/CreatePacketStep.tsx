@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { FileText, User, MapPin, Calendar, DollarSign } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { getApiUrl } from '@/config/api';
 
 interface CreatePacketStepProps {
   onNext: () => void;
@@ -45,7 +46,7 @@ export default function CreatePacketStep({ onNext, onPrev, onDataUpdate, claimDa
         documents: claimData.documents || [],
       };
 
-      const response = await fetch('http://localhost:8000/api/create-claim-packet', {
+      const response = await fetch(getApiUrl('/api/create-claim-packet'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -1,8 +1,11 @@
 'use client';
 
 import { useState } from 'react';
+import { getApiUrl } from '@/config/api';
 import { Download, Shield, Award, ExternalLink, CheckCircle } from 'lucide-react';
+import { getApiUrl } from '@/config/api';
 import toast from 'react-hot-toast';
+import { getApiUrl } from '@/config/api';
 
 interface FinalOutputsStepProps {
   onPrev: () => void;
@@ -23,7 +26,7 @@ export default function FinalOutputsStep({ onPrev, onDataUpdate, claimData }: Fi
     setGenerating(true);
 
     try {
-      const response = await fetch('http://localhost:8000/api/generate-final-outputs', {
+      const response = await fetch(getApiUrl('/api/generate-final-outputs'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -63,7 +66,7 @@ export default function FinalOutputsStep({ onPrev, onDataUpdate, claimData }: Fi
     }
 
     try {
-      const response = await fetch(`http://localhost:8000/api/download-final-pdf/${claimData.claimPacket.claim_id}`);
+      const response = await fetch(getApiUrl(`/api/download-final-pdf/${claimData.claimPacket.claim_id}`));
       
       if (!response.ok) {
         throw new Error('Download failed');
@@ -93,7 +96,7 @@ export default function FinalOutputsStep({ onPrev, onDataUpdate, claimData }: Fi
     }
 
     try {
-      const response = await fetch(`http://localhost:8000/api/download-complete-package/${claimData.claimPacket.claim_id}`);
+      const response = await fetch(getApiUrl(`/api/download-complete-package/${claimData.claimPacket.claim_id}`));
       
       if (!response.ok) {
         throw new Error('Download failed');

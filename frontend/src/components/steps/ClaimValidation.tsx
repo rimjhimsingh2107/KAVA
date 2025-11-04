@@ -1,10 +1,15 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { getApiUrl } from '@/config/api';
 import { motion } from 'framer-motion';
+import { getApiUrl } from '@/config/api';
 import { CheckCircle, XCircle, AlertTriangle, FileText, ArrowLeft, ArrowRight } from 'lucide-react';
+import { getApiUrl } from '@/config/api';
 import toast from 'react-hot-toast';
+import { getApiUrl } from '@/config/api';
 import axios from 'axios';
+import { getApiUrl } from '@/config/api';
 
 interface ClaimValidationProps {
   onNext: () => void;
@@ -36,7 +41,7 @@ export default function ClaimValidation({ onNext, onPrev, onDataUpdate, claimDat
         estimated_damage: parseFloat(claimData.claimInfo?.estimatedDamage || '0'),
       };
 
-      const response = await axios.post('http://localhost:8000/api/validate-claim', claimPacket);
+      const response = await axios.post(getApiUrl('/api/validate-claim'), claimPacket);
       setValidation(response.data);
       onDataUpdate({ validation: response.data, claimPacket });
       

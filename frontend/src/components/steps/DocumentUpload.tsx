@@ -1,11 +1,17 @@
 'use client';
 
 import { useState, useCallback } from 'react';
+import { getApiUrl } from '@/config/api';
 import { useDropzone } from 'react-dropzone';
+import { getApiUrl } from '@/config/api';
 import { Upload, File, X, CheckCircle, AlertCircle } from 'lucide-react';
+import { getApiUrl } from '@/config/api';
 import { motion } from 'framer-motion';
+import { getApiUrl } from '@/config/api';
 import toast from 'react-hot-toast';
+import { getApiUrl } from '@/config/api';
 import axios from 'axios';
+import { getApiUrl } from '@/config/api';
 
 interface DocumentUploadProps {
   onNext: () => void;
@@ -62,7 +68,7 @@ export default function DocumentUpload({ onNext, onDataUpdate, claimData }: Docu
         const formData = new FormData();
         formData.append('files', file);
 
-        const response = await axios.post('http://localhost:8000/api/upload-documents', formData, {
+        const response = await axios.post(getApiUrl('/api/upload-documents'), formData, {
           headers: {
             'Content-Type': 'multipart/form-data',
           },

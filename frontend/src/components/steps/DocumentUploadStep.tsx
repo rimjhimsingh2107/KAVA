@@ -1,9 +1,13 @@
 'use client';
 
 import { useState, useCallback } from 'react';
+import { getApiUrl } from '@/config/api';
 import { useDropzone } from 'react-dropzone';
+import { getApiUrl } from '@/config/api';
 import { Upload, File, CheckCircle, AlertCircle, CreditCard, Loader2 } from 'lucide-react';
+import { getApiUrl } from '@/config/api';
 import toast from 'react-hot-toast';
+import { getApiUrl } from '@/config/api';
 
 interface DocumentUploadStepProps {
   onNext: () => void;
@@ -61,7 +65,7 @@ export default function DocumentUploadStep({ onNext, onDataUpdate, claimData }: 
         
         // Call backend to fetch receipts for this company
         try {
-          const response = await fetch('http://localhost:8000/api/sync-receipts', {
+          const response = await fetch(getApiUrl('/api/sync-receipts'), {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -148,7 +152,7 @@ export default function DocumentUploadStep({ onNext, onDataUpdate, claimData }: 
     });
 
     try {
-      const response = await fetch('http://localhost:8000/api/upload-documents', {
+      const response = await fetch(getApiUrl('/api/upload-documents'), {
         method: 'POST',
         body: formData,
       });
