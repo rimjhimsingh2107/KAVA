@@ -3,9 +3,7 @@
 import { useState } from 'react';
 import { getApiUrl } from '@/config/api';
 import { Download, Shield, Award, ExternalLink, CheckCircle } from 'lucide-react';
-import { getApiUrl } from '@/config/api';
 import toast from 'react-hot-toast';
-import { getApiUrl } from '@/config/api';
 
 interface FinalOutputsStepProps {
   onPrev: () => void;

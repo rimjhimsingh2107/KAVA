@@ -3,15 +3,10 @@
 import { useState, useCallback } from 'react';
 import { getApiUrl } from '@/config/api';
 import { useDropzone } from 'react-dropzone';
-import { getApiUrl } from '@/config/api';
 import { Upload, File, X, CheckCircle, AlertCircle } from 'lucide-react';
-import { getApiUrl } from '@/config/api';
 import { motion } from 'framer-motion';
-import { getApiUrl } from '@/config/api';
 import toast from 'react-hot-toast';
-import { getApiUrl } from '@/config/api';
 import axios from 'axios';
-import { getApiUrl } from '@/config/api';
 
 interface DocumentUploadProps {
   onNext: () => void;

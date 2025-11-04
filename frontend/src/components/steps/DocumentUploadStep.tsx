@@ -3,11 +3,8 @@
 import { useState, useCallback } from 'react';
 import { getApiUrl } from '@/config/api';
 import { useDropzone } from 'react-dropzone';
-import { getApiUrl } from '@/config/api';
 import { Upload, File, CheckCircle, AlertCircle, CreditCard, Loader2 } from 'lucide-react';
-import { getApiUrl } from '@/config/api';
 import toast from 'react-hot-toast';
-import { getApiUrl } from '@/config/api';
 
 interface DocumentUploadStepProps {
   onNext: () => void;

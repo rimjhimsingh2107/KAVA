@@ -3,13 +3,9 @@
 import { useState, useEffect } from 'react';
 import { getApiUrl } from '@/config/api';
 import { motion } from 'framer-motion';
-import { getApiUrl } from '@/config/api';
 import { CheckCircle, XCircle, AlertTriangle, FileText, ArrowLeft, ArrowRight } from 'lucide-react';
-import { getApiUrl } from '@/config/api';
 import toast from 'react-hot-toast';
-import { getApiUrl } from '@/config/api';
 import axios from 'axios';
-import { getApiUrl } from '@/config/api';
 
 interface ClaimValidationProps {
   onNext: () => void;

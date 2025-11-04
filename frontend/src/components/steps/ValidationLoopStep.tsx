@@ -3,9 +3,7 @@
 import { useState, useEffect } from 'react';
 import { getApiUrl } from '@/config/api';
 import { Shield, RefreshCw, CheckCircle, AlertTriangle, TrendingUp } from 'lucide-react';
-import { getApiUrl } from '@/config/api';
 import toast from 'react-hot-toast';
-import { getApiUrl } from '@/config/api';
 
 interface ValidationLoopStepProps {
   onNext: () => void;
