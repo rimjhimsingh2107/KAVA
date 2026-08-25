@@ -1,22 +1,151 @@
-# API Documentation - AI Insurance Claims Validation System
+# Guide Bank
 
-## Overview
+Working notes for this project, kept together so they stay out of the
+repo root. Setup steps, API detail, test procedure and build history.
+
+- [Quickstart](#quickstart)
+- [Api Documentation](#api-documentation)
+
+---
+
+## Quickstart
+
+## 🚀 KAVA - Quick Start Guide
+
+### How to Run the Project
+
+#### **Method 1: Automated Startup (Easiest!)**
+
+Just double-click or run in terminal:
+
+```bash
+./start.sh
+```
+
+This will automatically:
+- ✅ Start the backend on port 8000
+- ✅ Start the frontend on port 3001
+- ✅ Open both servers in background
+
+Then open in browser: **http://localhost:3001**
+
+#### **Method 2: Manual Startup**
+
+**Terminal 1 - Backend:**
+```bash
+cd backend
+source venv/bin/activate
+python -m uvicorn main:app --reload --port 8000
+```
+
+**Terminal 2 - Frontend:**
+```bash
+cd frontend
+npm run dev
+```
+
+Then open: **http://localhost:3001**
+
+---
+
+### 🛑 How to Stop the Project
+
+#### **Method 1: Automated Shutdown**
+
+```bash
+./stop.sh
+```
+
+#### **Method 2: Manual Shutdown**
+
+Press `Ctrl+C` in each terminal window
+
+---
+
+### 📋 Before First Run
+
+Make sure you have:
+
+1. **Python virtual environment setup:**
+   ```bash
+   cd backend
+   python3 -m venv venv
+   source venv/bin/activate
+   pip install -r requirements.txt
+   ```
+
+2. **Frontend dependencies installed:**
+   ```bash
+   cd frontend
+   npm install
+   ```
+
+3. **Environment variables configured:**
+   - Copy `.env.example` to `.env`
+   - Add your `CLAUDE_API_KEY`
+
+---
+
+### ✨ Quick Access
+
+- **Frontend:** http://localhost:3001
+- **Backend API:** http://localhost:8000
+- **API Docs:** http://localhost:8000/docs
+
+---
+
+### 🎯 What the System Does
+
+1. **Upload Documents** - Insurance policy, damage photos, receipts
+2. **Create Claim Packet** - Organized claim with OCR processing
+3. **AI Judge Validation** - Progressive 4-iteration analysis with bonuses
+4. **Generate Outputs** - Final PDF report + ZIP package + Proof card
+
+---
+
+### 🆘 Troubleshooting
+
+**Port already in use:**
+```bash
+./stop.sh  # Kill everything first
+./start.sh # Then restart
+```
+
+**Backend not connecting:**
+- Check if `CLAUDE_API_KEY` is set in `.env`
+- Make sure virtual environment is activated
+
+**Frontend not loading:**
+- Run `npm install` in frontend directory
+- Check if port 3001 is free
+
+---
+
+Enjoy using KAVA! 🎉
+
+---
+
+## Api Documentation
+
+## API Documentation - AI Insurance Claims Validation System
+
+### Overview
 
 The AI Insurance Claims Validation System provides REST API endpoints for document processing, claim validation, and proof generation. This documentation covers all available endpoints and their usage.
 
-## Base URL
+### Base URL
 ```
 http://localhost:8000
 ```
 
-## Authentication
+### Authentication
 Currently no authentication required for demo purposes. In production, implement proper API key authentication.
 
-## Endpoints
+### Endpoints
 
-### 1. Document Upload and Processing
+#### 1. Document Upload and Processing
 
-#### `POST /api/upload-documents`
+##### `POST /api/upload-documents`
 
 Upload and process insurance claim documents using AI vision analysis.
 
@@ -60,9 +189,9 @@ Upload and process insurance claim documents using AI vision analysis.
 
 ---
 
-### 2. Claim Validation
+#### 2. Claim Validation
 
-#### `POST /api/validate-claim`
+##### `POST /api/validate-claim`
 
 Submit a complete claim packet for AI validation and scoring.
 
@@ -141,9 +270,9 @@ Submit a complete claim packet for AI validation and scoring.
 
 ---
 
-### 3. Proof Generation
+#### 3. Proof Generation
 
-#### `POST /api/generate-proof`
+##### `POST /api/generate-proof`
 
 Generate blockchain-anchored proof for validated claims.
 
@@ -180,9 +309,9 @@ Generate blockchain-anchored proof for validated claims.
 
 ---
 
-## Data Models
+### Data Models
 
-### ClaimPacket
+#### ClaimPacket
 ```typescript
 interface ClaimPacket {
   claim_id: string;
@@ -195,7 +324,7 @@ interface ClaimPacket {
 }
 ```
 
-### Document
+#### Document
 ```typescript
 interface Document {
   id: string;
@@ -208,7 +337,7 @@ interface Document {
 }
 ```
 
-### ValidationRule
+#### ValidationRule
 ```typescript
 interface ValidationRule {
   rule_id: string;
@@ -220,7 +349,7 @@ interface ValidationRule {
 }
 ```
 
-### ValidationResult
+#### ValidationResult
 ```typescript
 interface ValidationResult {
   claim_id: string;
@@ -235,9 +364,9 @@ interface ValidationResult {
 }
 ```
 
-## Error Handling
+### Error Handling
 
-### Standard Error Response
+#### Standard Error Response
 ```json
 {
   "error": {
@@ -252,7 +381,7 @@ interface ValidationResult {
 }
 ```
 
-### Common Error Codes
+#### Common Error Codes
 - `INVALID_FILE_FORMAT`: Unsupported file type
 - `FILE_TOO_LARGE`: File exceeds size limit
 - `PROCESSING_ERROR`: AI processing failed
@@ -260,25 +389,25 @@ interface ValidationResult {
 - `MISSING_REQUIRED_FIELD`: Required field not provided
 - `FRAUD_DETECTED`: High fraud risk detected
 
-## Rate Limits
+### Rate Limits
 
 - Document upload: 10 requests/minute per IP
 - Claim validation: 5 requests/minute per IP
 - Proof generation: 3 requests/minute per IP
 
-## Integration Examples
+### Integration Examples
 
-### Python Example
+#### Python Example
 ```python
 import requests
 import json
 
-# Upload documents
+## Upload documents
 files = {'files': open('damage_photo.jpg', 'rb')}
 response = requests.post('http://localhost:8000/api/upload-documents', files=files)
 documents = response.json()['documents']
 
-# Validate claim
+## Validate claim
 claim_data = {
     "claim_id": "WF-2024-001",
     "policy_number": "WF-POLICY-12345",
@@ -297,7 +426,7 @@ result = validation.json()
 print(f"Claim score: {result['overall_score']*100:.1f}%")
 ```
 
-### JavaScript Example
+#### JavaScript Example
 ```javascript
 // Upload documents
 const formData = new FormData();
@@ -330,7 +459,7 @@ const result = await validationResponse.json();
 console.log(`Claim score: ${(result.overall_score * 100).toFixed(1)}%`);
 ```
 
-## Security Considerations
+### Security Considerations
 
 1. **Input Validation**: All inputs are validated and sanitized
 2. **File Scanning**: Uploaded files are scanned for malware
@@ -338,7 +467,7 @@ console.log(`Claim score: ${(result.overall_score * 100).toFixed(1)}%`);
 4. **Data Privacy**: Sensitive data is encrypted at rest
 5. **Audit Logging**: All API calls are logged for audit purposes
 
-## EigenCloud TEE Integration
+### EigenCloud TEE Integration
 
 When EigenCloud TEE is available, validation requests are automatically routed through the secure execution environment:
 
@@ -357,14 +486,14 @@ TEE Response includes additional fields:
 }
 ```
 
-## Performance Metrics
+### Performance Metrics
 
 - **Document Processing**: 2-3 seconds per document
 - **AI Validation**: 5-10 seconds for complete evaluation
 - **Proof Generation**: 15-30 seconds (blockchain dependent)
 - **Concurrent Requests**: Up to 10 simultaneous validations
 
-## Support
+### Support
 
 For technical support and integration assistance:
 - GitHub Issues: [Repository Issues](https://github.com/your-repo/issues)
