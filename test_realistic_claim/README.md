@@ -1,8 +1,8 @@
-# 🔥 Realistic Wildfire Insurance Claim - Test Documents
+# Realistic Wildfire Insurance Claim - Test Documents
 
-This folder contains **REALISTIC** documents that someone affected by a wildfire would submit to KAVA.
+This folder contains realistic documents that someone affected by a wildfire would submit to KAVA.
 
-## 📋 Claim Scenario
+## Claim Scenario
 
 **Claimant:** Sarah Martinez  
 **Property:** 2847 Redwood Drive, Los Gatos, CA 95032  
@@ -15,7 +15,7 @@ A wildfire in the Los Gatos Hills area sent embers onto the property's roof. The
 
 ---
 
-## 📁 Documents to Upload to KAVA
+## Documents to Upload to KAVA
 
 ### 1. **01_kitchen_fire_damage.jpg** 
 - **Type:** Property damage photo
@@ -59,7 +59,7 @@ A wildfire in the Los Gatos Hills area sent embers onto the property's roof. The
 
 ---
 
-## 🎯 Expected KAVA Results
+## Expected KAVA Results
 
 When you upload these documents to KAVA:
 
@@ -76,28 +76,28 @@ When you upload these documents to KAVA:
 **Iteration 3 (+ Deep Processing):**
 - Rules Passed: ~38/47
 - Score: ~81%
-- Status: Target reached! ✅
+- Status: Target reached! 
 
 **Iteration 4 (Final Review):**
 - Rules Passed: ~40/47
 - Score: ~85%
-- Status: Approved! 🎉
+- Status: Approved! 
 
 ---
 
-## ✅ What Makes This a Good Claim
+## What Makes This a Good Claim
 
-✅ **Multiple document types** (photos, receipts, reports, policy)  
-✅ **Official documentation** (fire department report)  
-✅ **Professional assessment** (licensed contractor estimate)  
-✅ **Timely purchases** (receipts dated right after incident)  
-✅ **Appropriate purchases** (replacement appliances, safety equipment)  
-✅ **Valid policy** (wildfire coverage confirmed)  
-✅ **Clear causation** (fire dept confirms wildfire ember ignition)  
+**Multiple document types** (photos, receipts, reports, policy)  
+**Official documentation** (fire department report)  
+**Professional assessment** (licensed contractor estimate)  
+**Timely purchases** (receipts dated right after incident)  
+**Appropriate purchases** (replacement appliances, safety equipment)  
+**Valid policy** (wildfire coverage confirmed)  
+**Clear causation** (fire dept confirms wildfire ember ignition)  
 
 ---
 
-## 🚀 How to Test
+## How to Test
 
 1. Open KAVA: `http://localhost:3001`
 2. Upload ALL 6 files in Step 1
@@ -112,12 +112,12 @@ When you upload these documents to KAVA:
 
 ---
 
-## 📊 What You'll See in Final Outputs
+## What You'll See in Final Outputs
 
 **Cover Letter:** Professional submission to insurance company  
 **Proof of Loss:** Official sworn statement  
 **Property Photos:** Kitchen damage with descriptions  
-**Itemized Inventory:** ✅ **NOW POPULATED with actual items:**
+**Itemized Inventory:** **NOW POPULATED with actual items:**
 - Whirlpool Washer: $1,073.86
 - Safety Equipment: $289.38
 - Total Documented: $1,363.24
@@ -129,4 +129,4 @@ When you upload these documents to KAVA:
 
 ---
 
-This is a **complete, realistic wildfire claim** that will properly test all KAVA features! 🔥
+This is a **complete, realistic wildfire claim** that will properly test all KAVA features! 
