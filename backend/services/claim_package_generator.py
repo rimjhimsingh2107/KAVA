@@ -284,27 +284,27 @@ async def generate_property_damage_photos_pdf(claim_packet) -> str:
             
             story.append(Spacer(1, 10))
             
-            # ACTUALLY EMBED THE IMAGE
+            # embed the image
             try:
                 if file_path and os.path.exists(file_path):
-                    # Use actual image file - THIS WILL SHOW THE REAL PHOTO
-                    print(f"📸 Embedding image from: {file_path}")
+                    # use the image file if we have it
+                    print(f"Embedding image from: {file_path}")
                     img = RLImage(file_path, width=6*inch, height=4.5*inch, kind='proportional')
                     story.append(img)
-                    print(f"✅ Image embedded successfully: {filename}")
+                    print(f"Image embedded successfully: {filename}")
                 elif content:
                     # Use base64 encoded content
-                    print(f"📸 Embedding image from base64 content")
+                    print(f"Embedding image from base64 content")
                     img_data = base64.b64decode(content)
                     img_buffer = BytesIO(img_data)
                     img = RLImage(img_buffer, width=6*inch, height=4.5*inch, kind='proportional')
                     story.append(img)
-                    print(f"✅ Image embedded from base64: {filename}")
+                    print(f"Image embedded from base64: {filename}")
                 else:
-                    print(f"⚠️ No image source found for {filename}")
+                    print(f"No image source found for {filename}")
                     story.append(Paragraph(f"[Image file path not available: {filename}]", styles['Italic']))
             except Exception as e:
-                print(f"❌ Image embedding error for {filename}: {e}")
+                print(f"Image embedding error for {filename}: {e}")
                 story.append(Paragraph(f"[Could not embed image: {str(e)}]", styles['Italic']))
             
             story.append(Spacer(1, 20))
@@ -353,7 +353,7 @@ async def generate_itemized_inventory_pdf(claim_packet) -> str:
         inventory_data = [['Item Description', 'Purchase Date', 'Original Value', 'Condition']]
         total_value = 0
         
-        print(f"📊 Processing {len(receipt_docs)} receipts for inventory...")
+        print(f"Processing {len(receipt_docs)} receipts for inventory...")
         
         for idx, receipt in enumerate(receipt_docs):
             # Handle dict vs object
@@ -362,11 +362,11 @@ async def generate_itemized_inventory_pdf(claim_packet) -> str:
             else:
                 extracted_data = receipt.extracted_data if hasattr(receipt, 'extracted_data') else {}
             
-            print(f"📄 Receipt {idx+1}: extracted_data keys = {extracted_data.keys() if extracted_data else 'None'}")
+            print(f"Receipt {idx+1}: extracted_data keys = {extracted_data.keys() if extracted_data else 'None'}")
             
-            # Check if this is a MERGED receipt from Knot integration
+            # merged receipt from the Knot sync
             if extracted_data and extracted_data.get("merged_receipts"):
-                print(f"   🔗 MERGED RECEIPT detected with {extracted_data.get('total_receipts', 0)} receipts")
+                print(f"   MERGED RECEIPT detected with {extracted_data.get('total_receipts', 0)} receipts")
                 
                 # Extract individual receipts from the merged receipt
                 individual_receipts = extracted_data.get("receipts", [])
@@ -410,11 +410,11 @@ async def generate_itemized_inventory_pdf(claim_packet) -> str:
                             total_value += amount
                 continue
             
-            # Handle REGULAR individual receipt
+            # regular single receipt
             if extracted_data and isinstance(extracted_data, dict):
                 # Check if this is Claude-processed format (from document_processor)
                 if 'extracted_amounts' in extracted_data:
-                    print(f"   📝 CLAUDE-PROCESSED receipt format detected")
+                    print(f"   CLAUDE-PROCESSED receipt format detected")
                     
                     # Extract from Claude format
                     amounts = extracted_data.get('extracted_amounts', [])
@@ -494,11 +494,11 @@ async def generate_itemized_inventory_pdf(claim_packet) -> str:
                         ])
                         total_value += amount
                 else:
-                    print(f"   ⚠️ Skipping receipt with $0 amount")
+                    print(f"   Skipping receipt with $0 amount")
             else:
-                print(f"   ⚠️ Receipt {idx+1} has no valid extracted_data")
+                print(f"   Receipt {idx+1} has no valid extracted_data")
         
-        print(f"💰 Total inventory value: ${total_value:,.2f}")
+        print(f"Total inventory value: ${total_value:,.2f}")
         
         # Check if we actually added any items
         if len(inventory_data) == 1:  # Only header row
@@ -647,40 +647,40 @@ async def generate_comprehensive_claim_package(claim_packet, validation, generat
     8. AI Validation Report - Trust score and analysis
     """
     
-    print(f"📦 Generating REAL insurance claim package for {claim_packet.claim_id}")
+    print(f"Generating REAL insurance claim package for {claim_packet.claim_id}")
     
     # Create temp directory
     temp_dir = f"claim_packets/temp/{claim_packet.claim_id}"
     os.makedirs(temp_dir, exist_ok=True)
     
     try:
-        # 1. Generate Cover Letter (Professional insurance submission letter)
-        print("📄 Generating cover letter...")
+        # 1. cover letter
+        print("Generating cover letter...")
         cover_letter_path = await generate_cover_letter_pdf(claim_packet, validation)
         shutil.copy(cover_letter_path, f"{temp_dir}/01_COVER_LETTER.pdf")
         
-        # 2. Generate Proof of Loss Statement (Official claim form)
-        print("📋 Generating proof of loss statement...")
+        # 2. proof of loss statement
+        print("Generating proof of loss statement...")
         proof_of_loss_path = await generate_proof_of_loss_pdf(claim_packet, validation)
         shutil.copy(proof_of_loss_path, f"{temp_dir}/02_PROOF_OF_LOSS_STATEMENT.pdf")
         
         # 3. Generate Property Damage Photos PDF
-        print("📸 Compiling property damage photos...")
+        print("Compiling property damage photos...")
         photos_path = await generate_property_damage_photos_pdf(claim_packet)
         shutil.copy(photos_path, f"{temp_dir}/03_PROPERTY_DAMAGE_PHOTOS.pdf")
         
         # 4. Generate Itemized Loss Inventory
-        print("📊 Creating itemized inventory...")
+        print("Creating itemized inventory...")
         inventory_path = await generate_itemized_inventory_pdf(claim_packet)
         shutil.copy(inventory_path, f"{temp_dir}/04_ITEMIZED_LOSS_INVENTORY.pdf")
         
         # 5. Generate Purchase Receipts Compilation
-        print("🧾 Compiling purchase receipts...")
+        print("Compiling purchase receipts...")
         receipts_path = await generate_receipts_compilation_pdf(claim_packet)
         shutil.copy(receipts_path, f"{temp_dir}/05_PURCHASE_RECEIPTS.pdf")
         
         # 6. Copy Fire Department Reports and ALL user documents
-        print("🚒 Including all user documents...")
+        print("Including all user documents...")
         
         receipt_counter = 0
         report_counter = 0
@@ -709,14 +709,14 @@ async def generate_comprehensive_claim_package(claim_packet, validation, generat
                     # Has actual file - copy it
                     dest_path = os.path.join(dest_folder, filename)
                     shutil.copy(file_path, dest_path)
-                    print(f"📄 Copied receipt: {filename}")
+                    print(f"Copied receipt: {filename}")
                 else:
-                    # No file (JSON receipt from Knot) - GENERATE PDF
-                    print(f"📄 Generating PDF for JSON receipt: {filename}")
+                    # no file (JSON receipt from Knot), so generate a PDF
+                    print(f"Generating PDF for JSON receipt: {filename}")
                     receipt_pdf = generate_individual_receipt_pdf(doc, claim_packet.claim_id, receipt_counter)
                     dest_path = os.path.join(dest_folder, f"receipt_{receipt_counter}.pdf")
                     shutil.copy(receipt_pdf, dest_path)
-                    print(f"✅ Generated receipt PDF: receipt_{receipt_counter}.pdf")
+                    print(f"Generated receipt PDF: receipt_{receipt_counter}.pdf")
                 continue
             
             # Handle reports and estimates
@@ -728,18 +728,18 @@ async def generate_comprehensive_claim_package(claim_packet, validation, generat
                 if file_path and os.path.exists(file_path):
                     dest_path = os.path.join(dest_folder, filename)
                     shutil.copy(file_path, dest_path)
-                    print(f"📄 Copied report: {filename}")
+                    print(f"Copied report: {filename}")
                 else:
-                    print(f"⚠️ Report has no file: {filename}")
+                    print(f"Report has no file: {filename}")
                 continue
                 dest_folder = f"{temp_dir}/04_REPORTS"
                 os.makedirs(dest_folder, exist_ok=True)
                 dest_path = os.path.join(dest_folder, filename)
                 shutil.copy(file_path, dest_path)
-                print(f"📄 Copied estimate: {filename}")
+                print(f"Copied estimate: {filename}")
         
         # 8. Generate AI Validation Report
-        print("🤖 Generating AI validation report...")
+        print("Generating AI validation report...")
         validation_report_path = await generate_final_pdf_func(claim_packet, validation)
         shutil.copy(validation_report_path, f"{temp_dir}/99_AI_VALIDATION_REPORT.pdf")
         
@@ -822,7 +822,7 @@ Generated by: KAVA AI Claims Processing System
             f.write(readme_content)
         
         # 10. Create ZIP file
-        print("🗜️ Creating ZIP archive...")
+        print("Creating ZIP archive...")
         zip_path = f"claim_packets/{claim_packet.claim_id}_COMPLETE_PACKAGE.zip"
         
         with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
@@ -835,12 +835,12 @@ Generated by: KAVA AI Claims Processing System
         # 11. Cleanup temp directory
         shutil.rmtree(temp_dir)
         
-        print(f"✅ REAL insurance claim package generated: {zip_path}")
-        print(f"📄 Package contains professional, submission-ready documents")
+        print(f"REAL insurance claim package generated: {zip_path}")
+        print(f"Package contains professional, submission-ready documents")
         return zip_path
         
     except Exception as e:
-        print(f"❌ Error generating claim package: {e}")
+        print(f"Error generating claim package: {e}")
         import traceback
         traceback.print_exc()
         # Cleanup on error

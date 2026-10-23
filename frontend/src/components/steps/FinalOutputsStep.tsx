@@ -210,7 +210,7 @@ export default function FinalOutputsStep({ onPrev, onDataUpdate, claimData }: Fi
 
           {/* Outputs Grid */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {/* COMPLETE CLAIM PACKAGE - PRIMARY */}
+            {/* Complete claim package */}
             <div className="border-2 border-blue-500 rounded-lg p-6 bg-blue-50 shadow-lg">
               <div className="flex items-center mb-4">
                 <Download className="h-8 w-8 text-blue-600 mr-2" />

@@ -109,9 +109,8 @@ export default function DocumentUploadStep({ onNext, onDataUpdate, claimData }: 
 
       toast.success('Receipt sync completed!');
       
-      // Update parent component with ALL documents (uploaded + synced)
+      // pass uploaded + synced documents up to the parent
       const finalDocuments = [...uploadedDocs];
-      console.log('📄 Final combined documents:', finalDocuments.length);
       
       onDataUpdate({ 
         documents: finalDocuments,

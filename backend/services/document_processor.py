@@ -16,10 +16,10 @@ class DocumentProcessor:
         api_key = os.getenv("CLAUDE_API_KEY")
         if api_key:
             self.client = anthropic.Anthropic(api_key=api_key)
-            print("✅ Claude API initialized successfully for document processing")
+            print("Claude API initialized successfully for document processing")
         else:
             self.client = None
-            print("❌ WARNING: CLAUDE_API_KEY not set - document processing will fail")
+            print("WARNING: CLAUDE_API_KEY not set - document processing will fail")
         
     async def process_document(self, content: bytes, filename: str) -> ClaimDocument:
         """Process uploaded document - FIXED to handle PDFs properly"""
@@ -118,7 +118,7 @@ class DocumentProcessor:
         """Analyze extracted text using Claude API"""
         
         if not self.client:
-            print("⚠️ Claude API not available - cannot process document")
+            print("Claude API not available - cannot process document")
             return {
                 "document_type": "error",
                 "error": "Claude API key not configured",
@@ -189,10 +189,10 @@ Return JSON:
                 }
                 
         except Exception as e:
-            print(f"❌ Claude text analysis failed: {e}")
-            print(f"❌ ERROR TYPE: {type(e).__name__}")
-            print(f"❌ This means Claude API is not working properly")
-            print(f"❌ Check your API credits at: https://console.anthropic.com/")
+            print(f"Claude text analysis failed: {e}")
+            print(f"ERROR TYPE: {type(e).__name__}")
+            print(f"This means Claude API is not working properly")
+            print(f"Check your API credits at: https://console.anthropic.com/")
             # Return error data instead of crashing
             return {
                 "document_type": "claude_api_error",
@@ -254,7 +254,7 @@ Return JSON:
         """Process images using Claude Vision API"""
         
         if not self.client:
-            print("⚠️ Claude API not available - cannot process photo")
+            print("Claude API not available - cannot process photo")
             return {
                 "document_type": "photo",
                 "error": "Claude API key not configured",
@@ -323,7 +323,7 @@ Return JSON:
                 raise ValueError("No valid JSON found in Claude response")
                 
         except Exception as e:
-            print(f"❌ Claude Vision API failed: {e}")
+            print(f"Claude Vision API failed: {e}")
             # NO FALLBACK - Force real Claude API usage
             raise Exception(f"Claude Vision API failed - real processing required: {e}")
     

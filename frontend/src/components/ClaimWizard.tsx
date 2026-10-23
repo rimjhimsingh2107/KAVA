@@ -40,17 +40,14 @@ export default function ClaimWizard() {
   };
 
   const updateClaimData = (data: any) => {
-    console.log('🔄 Updating claim data:', data);
     setClaimData(prev => {
       const newData = { ...prev, ...data };
-      console.log('📊 New claim data state:', newData);
       return newData;
     });
   };
 
-  // Force clear validation data when going back to step 3
+  // clear old validation results when going back to step 3
   const clearValidationData = () => {
-    console.log('🧹 Clearing validation data');
     setClaimData(prev => ({
       ...prev,
       validationHistory: [],

@@ -12,15 +12,15 @@ class AIJudge:
     def __init__(self):
         api_key = os.getenv("CLAUDE_API_KEY")
         if not api_key:
-            print("❌ CLAUDE_API_KEY not found in environment variables")
+            print("CLAUDE_API_KEY not found in environment variables")
             self.client = None
         else:
-            print(f"✅ CLAUDE_API_KEY loaded: {api_key[:10]}...{api_key[-10:]}")
+            print("CLAUDE_API_KEY loaded")
             try:
                 self.client = anthropic.Anthropic(api_key=api_key)
-                print("✅ Claude API client initialized successfully")
+                print("Claude API client initialized successfully")
             except Exception as e:
-                print(f"❌ Failed to initialize Claude API client: {e}")
+                print(f"Failed to initialize Claude API client: {e}")
                 self.client = None
         
         self.constitution = self._load_constitution()
@@ -350,16 +350,15 @@ class AIJudge:
     async def evaluate_claim(self, claim_packet: ClaimPacket) -> ClaimValidation:
         """Evaluate a complete claim packet using Claude AI (skip TEE for now)"""
         
-        print("🚀 Starting AI Judge evaluation - using Claude API directly")
+        print("Starting AI Judge evaluation - using Claude API directly")
         
         # Skip EigenCloud TEE for now and go straight to Claude evaluation
-        # This ensures we get real AI-powered dynamic scoring instead of hardcoded TEE responses
         
         try:
             # Use Claude AI evaluation directly (defaults to basic screening)
             return await self._evaluate_locally(claim_packet)
         except Exception as e:
-            print(f"⚠️ Claude AI evaluation failed, falling back to basic rules: {e}")
+            print(f"Claude AI evaluation failed, falling back to basic rules: {e}")
             # Fallback to basic rules if Claude fails
             return await self._evaluate_with_basic_rules(claim_packet)
     
@@ -367,7 +366,7 @@ class AIJudge:
                                  previous_scores: list = []) -> ClaimValidation:
         """Evaluate claim with progressive depth based on iteration number"""
         
-        print(f"🔍 AI Judge Iteration {iteration} - Analysis Depth: {self._get_depth_name(iteration)}")
+        print(f"AI Judge Iteration {iteration} - Analysis Depth: {self._get_depth_name(iteration)}")
         
         try:
             if iteration == 1:
@@ -379,7 +378,7 @@ class AIJudge:
             else:
                 return await self._expert_review(claim_packet, previous_scores)
         except Exception as e:
-            print(f"⚠️ Depth-based evaluation failed: {e}")
+            print(f"Depth-based evaluation failed: {e}")
             # Fallback to basic evaluation
             return await self._evaluate_locally(claim_packet)
     
@@ -427,7 +426,7 @@ class AIJudge:
             ) as response:
                 if response.status == 200:
                     result = await response.json()
-                    print(f"✅ EigenCloud TEE evaluation successful: Score {result.get('overall_score', 'N/A')}")
+                    print(f"EigenCloud TEE evaluation successful: Score {result.get('overall_score', 'N/A')}")
                     return result
                 else:
                     raise Exception(f"EigenCloud returned status {response.status}")
@@ -462,12 +461,12 @@ class AIJudge:
         """REAL AI-powered evaluation using Claude API instead of mock rules"""
         
         if not self.client:
-            print("⚠️ No Claude API client available, falling back to basic rule evaluation")
+            print("No Claude API client available, falling back to basic rule evaluation")
             return await self._evaluate_with_basic_rules(claim_packet)
         
-        # Use Claude API for REAL AI analysis
+        # ask Claude to analyze the claim
         try:
-            print("🤖 Starting REAL Claude AI evaluation...")
+            print("Starting REAL Claude AI evaluation...")
             
             # Prepare claim data for Claude analysis
             claim_summary = {
@@ -500,7 +499,7 @@ class AIJudge:
             
             claim_summary["days_since_incident"] = days_since
             
-            # Create comprehensive Claude prompt for REAL AI analysis
+            # build the prompt
             prompt = f"""You are an expert AI Judge for wildfire insurance claims. Analyze this claim comprehensively and provide a detailed validation score.
 
 CLAIM DATA:
@@ -543,9 +542,8 @@ Return a detailed JSON analysis:
 
 Be thorough and realistic. Base your analysis on ACTUAL document content and real insurance industry standards."""
 
-            print("🔍 Sending claim to Claude for REAL AI analysis...")
+            print("Sending claim to Claude for REAL AI analysis...")
             
-            # Call Claude API for real analysis
             try:
                 response = self.client.messages.create(
                     model="claude-sonnet-4-20250514",
@@ -559,12 +557,12 @@ Be thorough and realistic. Base your analysis on ACTUAL document content and rea
                 
                 # Parse Claude's response
                 analysis_text = response.content[0].text
-                print(f"🤖 Claude AI analysis received: {len(analysis_text)} characters")
-                print(f"🔍 Claude response preview: {analysis_text[:200]}...")
+                print(f"Claude AI analysis received: {len(analysis_text)} characters")
+                print(f"Claude response preview: {analysis_text[:200]}...")
                 
             except Exception as claude_error:
-                print(f"❌ Claude API call failed: {claude_error}")
-                print("📋 Falling back to basic rule evaluation")
+                print(f"Claude API call failed: {claude_error}")
+                print("Falling back to basic rule evaluation")
                 return await self._evaluate_with_basic_rules(claim_packet)
             
             # Extract JSON from Claude's response
@@ -572,17 +570,17 @@ Be thorough and realistic. Base your analysis on ACTUAL document content and rea
             json_match = re.search(r'\{.*\}', analysis_text, re.DOTALL)
             if json_match:
                 claude_analysis = json.loads(json_match.group())
-                print(f"✅ Claude analysis parsed successfully. Score: {claude_analysis.get('overall_score', 'N/A')}")
+                print(f"Claude analysis parsed successfully. Score: {claude_analysis.get('overall_score', 'N/A')}")
                 
                 # Convert Claude's analysis to our ClaimValidation format
                 return self._convert_claude_analysis_to_validation(claude_analysis, claim_packet)
             else:
-                print("❌ Failed to parse Claude analysis JSON, falling back to basic rules")
+                print("Failed to parse Claude analysis JSON, falling back to basic rules")
                 return await self._evaluate_with_basic_rules(claim_packet)
                 
         except Exception as e:
-            print(f"❌ Claude AI evaluation failed: {e}")
-            print("📋 Falling back to basic rule evaluation")
+            print(f"Claude AI evaluation failed: {e}")
+            print("Falling back to basic rule evaluation")
             return await self._evaluate_with_basic_rules(claim_packet)
     
     def _convert_claude_analysis_to_validation(self, claude_analysis: Dict[str, Any], claim_packet: ClaimPacket, analysis_depth: str = "BASIC") -> ClaimValidation:
@@ -591,7 +589,7 @@ Be thorough and realistic. Base your analysis on ACTUAL document content and rea
         # Get Claude's overall assessment
         overall_score = claude_analysis.get("overall_score", 0.5)
         
-        # Use ALL 47 rules from constitution
+        # go through all 47 rules
         rules_evaluated = []
         rules_passed_count = 0
         
@@ -625,7 +623,7 @@ Be thorough and realistic. Base your analysis on ACTUAL document content and rea
                     rationale=f"{analysis_depth}: {claude_analysis.get('detailed_rationale', 'Analysis complete')}"[:100]
                 ))
         
-        print(f"📊 Converted Claude score {overall_score:.1%} → {rules_passed_count}/{len(rules_evaluated)} rules passed")
+        print(f"Converted Claude score {overall_score:.1%} → {rules_passed_count}/{len(rules_evaluated)} rules passed")
         
         # Enhanced rationale with depth information
         base_rationale = claude_analysis.get('detailed_rationale', 'AI evaluation completed')
@@ -645,7 +643,7 @@ Be thorough and realistic. Base your analysis on ACTUAL document content and rea
     async def _evaluate_with_basic_rules(self, claim_packet: ClaimPacket) -> ClaimValidation:
         """Comprehensive basic rule evaluation (fallback when Claude API fails)"""
         
-        # Evaluate each rule category with actual logic
+        # evaluate each rule category
         completeness_results = await self._evaluate_completeness(claim_packet)
         damage_results = await self._evaluate_damage_assessment(claim_packet)
         quality_results = await self._evaluate_documentation_quality(claim_packet)
@@ -701,7 +699,6 @@ Be thorough and realistic. Base your analysis on ACTUAL document content and rea
         for rule_config in self.constitution["rules"]["completeness"]:
             rule_id = rule_config["id"]
             
-            # Real validation logic for each completeness rule
             if rule_id == "COMP_001":  # Property photos requirement
                 photo_docs = [doc for doc in claim_packet.documents if 'photo' in str(doc.document_type).lower()]
                 has_photos = len(photo_docs) >= 2
@@ -1029,7 +1026,7 @@ Be thorough and realistic. Base your analysis on ACTUAL document content and rea
     async def _basic_screening(self, claim_packet: ClaimPacket) -> ClaimValidation:
         """ITERATION 1: Basic surface-level screening for quick approval/rejection"""
         
-        print("🏃‍♂️ ITERATION 1: Basic Screening - Surface-level validation")
+        print("ITERATION 1: Basic Screening - Surface-level validation")
         
         if not self.client:
             return await self._evaluate_with_basic_rules(claim_packet)
@@ -1054,7 +1051,7 @@ Be thorough and realistic. Base your analysis on ACTUAL document content and rea
             except:
                 days_since = 0
             
-            # BASIC SCREENING PROMPT - Surface-level validation
+            # iteration 1: basic screening
             prompt = f"""You are conducting BASIC SCREENING for a wildfire insurance claim (ITERATION 1).
 
 CLAIM OVERVIEW:
@@ -1090,7 +1087,7 @@ Return BASIC SCREENING analysis in JSON:
 
 Focus on SPEED and OBVIOUSNESS. Don't deep-dive yet - just identify clear patterns."""
             
-            print("🔍 Sending BASIC SCREENING to Claude...")
+            print("Sending BASIC SCREENING to Claude...")
             
             response = self.client.messages.create(
                 model="claude-sonnet-4-20250514",
@@ -1100,7 +1097,7 @@ Focus on SPEED and OBVIOUSNESS. Don't deep-dive yet - just identify clear patter
             )
             
             analysis_text = response.content[0].text
-            print(f"🎯 Basic screening analysis received: {len(analysis_text)} characters")
+            print(f"Basic screening analysis received: {len(analysis_text)} characters")
             
             # Parse Claude's response
             import re
@@ -1112,13 +1109,13 @@ Focus on SPEED and OBVIOUSNESS. Don't deep-dive yet - just identify clear patter
                 return await self._evaluate_with_basic_rules(claim_packet)
                 
         except Exception as e:
-            print(f"❌ Basic screening failed: {e}")
+            print(f"Basic screening failed: {e}")
             return await self._evaluate_with_basic_rules(claim_packet)
     
     async def _enhanced_with_receipts(self, claim_packet: ClaimPacket, previous_scores: list) -> ClaimValidation:
         """ITERATION 2: Enhanced analysis with Knot receipt integration"""
         
-        print("💳 ITERATION 2: Enhanced Analysis - With Knot receipt integration")
+        print("ITERATION 2: Enhanced Analysis - With Knot receipt integration")
         
         if not self.client:
             return await self._evaluate_with_basic_rules(claim_packet)
@@ -1165,7 +1162,7 @@ Focus on SPEED and OBVIOUSNESS. Don't deep-dive yet - just identify clear patter
                 ]
             }
             
-            # ENHANCED PROMPT with receipt analysis and IMPROVEMENT INSTRUCTION
+            # iteration 2: re-check with the receipt data
             prompt = f"""You are conducting ENHANCED ANALYSIS for a wildfire insurance claim (ITERATION 2).
 
 ENHANCED CLAIM DATA WITH RECEIPTS:
@@ -1234,7 +1231,7 @@ Return ENHANCED analysis in JSON:
 
 Analyze the FINANCIAL EVIDENCE thoroughly. Consider receipt quality and auto-fetched Knot data credibility."""
             
-            print("💰 Sending ENHANCED ANALYSIS to Claude...")
+            print("Sending ENHANCED ANALYSIS to Claude...")
             
             response = self.client.messages.create(
                 model="claude-sonnet-4-20250514",
@@ -1244,7 +1241,7 @@ Analyze the FINANCIAL EVIDENCE thoroughly. Consider receipt quality and auto-fet
             )
             
             analysis_text = response.content[0].text
-            print(f"💳 Enhanced analysis received: {len(analysis_text)} characters")
+            print(f"Enhanced analysis received: {len(analysis_text)} characters")
             
             # Parse Claude's response
             import re
@@ -1256,13 +1253,13 @@ Analyze the FINANCIAL EVIDENCE thoroughly. Consider receipt quality and auto-fet
                 return await self._evaluate_with_basic_rules(claim_packet)
                 
         except Exception as e:
-            print(f"❌ Enhanced analysis failed: {e}")
+            print(f"Enhanced analysis failed: {e}")
             return await self._evaluate_with_basic_rules(claim_packet)
     
     async def _forensic_analysis(self, claim_packet: ClaimPacket, previous_scores: list) -> ClaimValidation:
         """ITERATION 3: Forensic deep-dive analysis with cross-referencing"""
         
-        print("🕵️ ITERATION 3: Forensic Analysis - Deep investigative examination")
+        print("ITERATION 3: Forensic Analysis - Deep investigative examination")
         
         if not self.client:
             return await self._evaluate_with_basic_rules(claim_packet)
@@ -1319,7 +1316,7 @@ Analyze the FINANCIAL EVIDENCE thoroughly. Consider receipt quality and auto-fet
                 }
             }
             
-            # FORENSIC ANALYSIS PROMPT - Deep investigative examination with IMPROVEMENT FOCUS
+            # iteration 3: forensic pass
             prompt = f"""You are conducting FORENSIC ANALYSIS for a wildfire insurance claim (ITERATION 3).
 
 FORENSIC INVESTIGATION DATA:
@@ -1378,7 +1375,7 @@ Return FORENSIC analysis in JSON:
 
 Be THOROUGH and SKEPTICAL. Look for subtle patterns basic screening missed."""
             
-            print("🔍 Sending FORENSIC ANALYSIS to Claude...")
+            print("Sending FORENSIC ANALYSIS to Claude...")
             
             response = self.client.messages.create(
                 model="claude-sonnet-4-20250514",
@@ -1388,7 +1385,7 @@ Be THOROUGH and SKEPTICAL. Look for subtle patterns basic screening missed."""
             )
             
             analysis_text = response.content[0].text
-            print(f"🕵️ Forensic analysis received: {len(analysis_text)} characters")
+            print(f"Forensic analysis received: {len(analysis_text)} characters")
             
             # Parse Claude's response
             import re
@@ -1400,13 +1397,13 @@ Be THOROUGH and SKEPTICAL. Look for subtle patterns basic screening missed."""
                 return await self._evaluate_with_basic_rules(claim_packet)
                 
         except Exception as e:
-            print(f"❌ Forensic analysis failed: {e}")
+            print(f"Forensic analysis failed: {e}")
             return await self._evaluate_with_basic_rules(claim_packet)
     
     async def _expert_review(self, claim_packet: ClaimPacket, previous_scores: list) -> ClaimValidation:
         """ITERATION 4: Expert-level comprehensive final review"""
         
-        print("👨‍⚖️ ITERATION 4: Expert Review - Comprehensive final assessment")
+        print("ITERATION 4: Expert Review - Comprehensive final assessment")
         
         if not self.client:
             return await self._evaluate_with_basic_rules(claim_packet)
@@ -1442,7 +1439,7 @@ Be THOROUGH and SKEPTICAL. Look for subtle patterns basic screening missed."""
             
             expert_data["document_portfolio"] = doc_types
             
-            # EXPERT REVIEW PROMPT - Comprehensive final assessment with IMPROVEMENT RECOGNITION
+            # iteration 4: final expert review
             prompt = f"""You are conducting EXPERT REVIEW for a wildfire insurance claim (ITERATION 4 - FINAL).
 
 COMPREHENSIVE EXPERT DATA:
@@ -1512,7 +1509,7 @@ Return EXPERT REVIEW in JSON:
 
 This is the FINAL ITERATION. Be definitive, authoritative, and comprehensive."""
             
-            print("⚖️ Sending EXPERT REVIEW to Claude...")
+            print("Sending EXPERT REVIEW to Claude...")
             
             response = self.client.messages.create(
                 model="claude-sonnet-4-20250514",
@@ -1522,7 +1519,7 @@ This is the FINAL ITERATION. Be definitive, authoritative, and comprehensive."""
             )
             
             analysis_text = response.content[0].text
-            print(f"👨‍⚖️ Expert review received: {len(analysis_text)} characters")
+            print(f"Expert review received: {len(analysis_text)} characters")
             
             # Parse Claude's response
             import re
@@ -1534,5 +1531,5 @@ This is the FINAL ITERATION. Be definitive, authoritative, and comprehensive."""
                 return await self._evaluate_with_basic_rules(claim_packet)
                 
         except Exception as e:
-            print(f"❌ Expert review failed: {e}")
+            print(f"Expert review failed: {e}")
             return await self._evaluate_with_basic_rules(claim_packet)

@@ -41,7 +41,6 @@ export default function ValidationLoopStep({ onNext, onPrev, onDataUpdate, claim
         max_iterations: 3,
       };
 
-      console.log('🔍 Sending validation request:', requestData);
 
       const response = await fetch(getApiUrl('/api/validation-loop'), {
         method: 'POST',
@@ -59,9 +58,8 @@ export default function ValidationLoopStep({ onNext, onPrev, onDataUpdate, claim
 
       const result = await response.json();
       
-      console.log('🔥 RAW API RESPONSE:', result);
-      console.log('🔥 FINAL VALIDATION SCORE:', result.final_validation.overall_score);
-      console.log('🔥 CLAIM ID:', result.final_validation.claim_id);
+      console.log('final score:', result.final_validation.overall_score);
+      console.log('claim id:', result.final_validation.claim_id);
       
       // Force re-render by clearing state first
       setValidationHistory([]);
@@ -69,7 +67,7 @@ export default function ValidationLoopStep({ onNext, onPrev, onDataUpdate, claim
       
       // Wait for React to update
       setTimeout(() => {
-        console.log('✅ Setting new validation data:', {
+        console.log('setting validation data:', {
           score: result.final_validation.overall_score,
           iterations: result.iterations_completed,
           claimId: result.final_validation.claim_id

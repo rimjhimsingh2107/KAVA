@@ -510,7 +510,7 @@ async def sync_receipts(request: Dict[str, Any]):
         claimant_name = request.get("claimant_name", "")
         date_range = request.get("date_range", {})
         
-        print(f"🔍 Syncing receipts for company: {company}")
+        print(f"Syncing receipts for company: {company}")
         
         # Read test receipts from file (simulating Knot API response)
         receipts_file_path = "../test_claims/receipts.json"
@@ -562,7 +562,7 @@ async def sync_receipts(request: Dict[str, Any]):
                 
                 filtered_receipts.append(receipt_doc)
         
-        print(f"✅ Found {len(filtered_receipts)} receipts for {company}")
+        print(f"Found {len(filtered_receipts)} receipts for {company}")
         
         return {
             "receipts": filtered_receipts,
@@ -572,7 +572,7 @@ async def sync_receipts(request: Dict[str, Any]):
         }
         
     except Exception as e:
-        print(f"❌ Receipt sync error: {e}")
+        print(f"Receipt sync error: {e}")
         raise HTTPException(status_code=500, detail=f"Receipt sync failed: {str(e)}")
 
 @app.get("/")
@@ -743,7 +743,7 @@ async def create_claim_packet(claim_data: Dict[str, Any]):
         
         print(f"Claim packet created successfully: {claim_packet.claim_id}")
         
-        # 💾 SAVE TO DATABASE
+        # save to database
         from database import ClaimRecord, SessionLocal
         db = SessionLocal()
         try:
@@ -760,9 +760,9 @@ async def create_claim_packet(claim_data: Dict[str, Any]):
             )
             db.add(claim_record)
             db.commit()
-            print(f"💾 Claim saved to database: {claim_packet.claim_id}")
+            print(f"Claim saved to database: {claim_packet.claim_id}")
         except Exception as db_error:
-            print(f"⚠️ Database save failed: {db_error}")
+            print(f"Database save failed: {db_error}")
             db.rollback()
         finally:
             db.close()
@@ -793,39 +793,39 @@ async def enhanced_validation_loop(request: Dict[str, Any]):
         previous_scores = []
         iteration = 0
         
-        print(f"🚀 Starting Progressive Validation Loop for claim {claim_packet.claim_id}")
-        print(f"🎯 Same 47 rules each iteration - claim improves to pass more!")
+        print(f"Starting Progressive Validation Loop for claim {claim_packet.claim_id}")
+        print(f"Same 47 rules each iteration - claim improves to pass more!")
         
         while iteration < max_iterations:
             iteration += 1
             
             print(f"\n{'='*60}")
-            print(f"🔄 ITERATION {iteration}/{max_iterations}")
+            print(f"ITERATION {iteration}/{max_iterations}")
             print(f"{'='*60}")
             
-            # ENHANCE THE CLAIM (so it passes more rules)
+            # enhance the claim so it passes more rules
             original_doc_count = len(claim_packet.documents)
             
             if iteration == 2:
-                print("💳 ITERATION 2: Adding Knot receipts to pass more rules...")
+                print("ITERATION 2: Adding Knot receipts to pass more rules...")
                 claim_packet = await auto_enhance_with_knot_receipts(claim_packet)
-                print(f"📄 Documents: {original_doc_count} → {len(claim_packet.documents)}")
+                print(f"Documents: {original_doc_count} → {len(claim_packet.documents)}")
                 
             elif iteration == 3:
-                print("🔍 ITERATION 3: Reprocessing documents for better quality...")
+                print("ITERATION 3: Reprocessing documents for better quality...")
                 claim_packet = await deep_reprocess_documents(claim_packet)
                 
             elif iteration == 4:
-                print("⚖️ ITERATION 4: Final review with all enhancements...")
+                print("ITERATION 4: Final review with all enhancements...")
             
-            # EVALUATE AGAINST ALL 47 RULES (same rules, better claim)
+            # re-evaluate against the same 47 rules
             validation = await ai_judge.evaluate_with_depth(claim_packet, iteration, previous_scores)
             
             current_score = validation.overall_score
             rules_passed = len([r for r in validation.rules_evaluated if r.passed])
             total_rules = len(validation.rules_evaluated)
             
-            print(f"📊 Rules: {rules_passed}/{total_rules} passed = {current_score:.1%}")
+            print(f"Rules: {rules_passed}/{total_rules} passed = {current_score:.1%}")
             
             # Record results
             validation_history.append({
@@ -839,20 +839,20 @@ async def enhanced_validation_loop(request: Dict[str, Any]):
                 "documents_processed": len(claim_packet.documents)
             })
             
-            # EXIT CONDITIONS
+            # exit conditions
             if current_score >= 0.8:
-                print(f"🎉 TARGET: {current_score:.1%} ≥80%!")
+                print(f"TARGET: {current_score:.1%} ≥80%!")
                 break
             
             previous_scores.append(current_score)
             
             if iteration < max_iterations:
                 improvement_so_far = current_score - previous_scores[0] if len(previous_scores) > 1 else 0
-                print(f"🔄 Current {current_score:.1%}, improved {improvement_so_far:+.1%} total, continuing...")
+                print(f"Current {current_score:.1%}, improved {improvement_so_far:+.1%} total, continuing...")
         
         final_validation = validation_history[-1]["validation"]
         
-        print(f"\n🏁 COMPLETE: {final_validation['overall_score']:.1%} after {iteration} iterations")
+        print(f"\nCOMPLETE: {final_validation['overall_score']:.1%} after {iteration} iterations")
         
         # Save to database
         from database import ClaimRecord, SessionLocal
@@ -878,7 +878,7 @@ async def enhanced_validation_loop(request: Dict[str, Any]):
             "next_step": "generate_final_outputs"
         }
     except Exception as e:
-        print(f"❌ Validation loop error: {e}")
+        print(f"Validation loop error: {e}")
         import traceback
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
@@ -887,7 +887,7 @@ async def enhanced_validation_loop(request: Dict[str, Any]):
 async def auto_enhance_with_knot_receipts(claim_packet: ClaimPacket) -> ClaimPacket:
     """Auto-enhance claim packet with Knot receipt integration (ITERATION 2)"""
     try:
-        print("💳 Auto-enhancing claim with Knot receipt integration...")
+        print("Auto-enhancing claim with Knot receipt integration...")
         
         companies_to_sync = ["home_depot", "amazon", "walmart"]
         all_synced_receipts = []
@@ -907,7 +907,7 @@ async def auto_enhance_with_knot_receipts(claim_packet: ClaimPacket) -> ClaimPac
                 # Call sync-receipts internally 
                 sync_result = await sync_receipts(sync_request)
                 if sync_result.get("receipts"):
-                    print(f"✅ Found {len(sync_result['receipts'])} receipts from {company}")
+                    print(f"Found {len(sync_result['receipts'])} receipts from {company}")
                     
                     # Convert synced receipts to Document objects
                     for receipt_data in sync_result["receipts"]:
@@ -922,7 +922,7 @@ async def auto_enhance_with_knot_receipts(claim_packet: ClaimPacket) -> ClaimPac
                         )
                         all_synced_receipts.append(receipt_doc)
             except Exception as e:
-                print(f"⚠️ Failed to sync {company}: {e}")
+                print(f"Failed to sync {company}: {e}")
         
         # Create merged receipt document if we found receipts
         if all_synced_receipts:
@@ -960,20 +960,20 @@ async def auto_enhance_with_knot_receipts(claim_packet: ClaimPacket) -> ClaimPac
             claim_packet.documents.append(merged_receipt_doc)
             claim_packet.documents.extend(all_synced_receipts[:3])  # Top 3 individual receipts
             
-            print(f"📄 Enhanced with {len(all_synced_receipts)} receipts totaling ${total_amount:,.2f}")
+            print(f"Enhanced with {len(all_synced_receipts)} receipts totaling ${total_amount:,.2f}")
         else:
-            print("ℹ️ No additional receipts found via Knot integration")
+            print("ℹNo additional receipts found via Knot integration")
         
         return claim_packet
         
     except Exception as e:
-        print(f"❌ Knot enhancement failed: {e}")
+        print(f"Knot enhancement failed: {e}")
         return claim_packet
 
 async def deep_reprocess_documents(claim_packet: ClaimPacket) -> ClaimPacket:
     """Deep reprocessing of documents for forensic analysis (ITERATION 3)"""
     try:
-        print("🔍 Deep reprocessing documents for forensic analysis...")
+        print("Deep reprocessing documents for forensic analysis...")
         
         reprocessed_count = 0
         
@@ -981,26 +981,26 @@ async def deep_reprocess_documents(claim_packet: ClaimPacket) -> ClaimPacket:
         for doc in claim_packet.documents:
             if doc.confidence_score < 0.8:  # Higher threshold for forensic analysis
                 try:
-                    print(f"🔄 Reprocessing {doc.filename} (confidence: {doc.confidence_score:.1%})")
+                    print(f"Reprocessing {doc.filename} (confidence: {doc.confidence_score:.1%})")
                     reprocessed = await doc_processor.reprocess_document(doc)
                     if reprocessed and reprocessed.confidence_score > doc.confidence_score:
                         old_confidence = doc.confidence_score
                         doc.extracted_data = reprocessed.extracted_data
                         doc.confidence_score = reprocessed.confidence_score
                         reprocessed_count += 1
-                        print(f"✅ Improved {doc.filename}: {old_confidence:.1%} → {doc.confidence_score:.1%}")
+                        print(f"Improved {doc.filename}: {old_confidence:.1%} → {doc.confidence_score:.1%}")
                 except Exception as e:
-                    print(f"⚠️ Failed to reprocess {doc.filename}: {e}")
+                    print(f"Failed to reprocess {doc.filename}: {e}")
         
         if reprocessed_count > 0:
-            print(f"📈 Successfully reprocessed {reprocessed_count} documents")
+            print(f"Successfully reprocessed {reprocessed_count} documents")
         else:
-            print("ℹ️ No documents required reprocessing")
+            print("ℹNo documents required reprocessing")
         
         return claim_packet
         
     except Exception as e:
-        print(f"❌ Deep reprocessing failed: {e}")
+        print(f"Deep reprocessing failed: {e}")
         return claim_packet
 
 @app.post("/api/generate-final-outputs")
@@ -1011,18 +1011,18 @@ async def generate_final_outputs(request: Dict[str, Any]):
         claim_packet_data = request.get("claim_packet", {})
         validation_data = request.get("validation", {})
         
-        print(f"📥 Received generate_final_outputs request")
-        print(f"📦 Claim packet data keys: {claim_packet_data.keys()}")
-        print(f"✅ Validation data keys: {validation_data.keys()}")
+        print(f"Received generate_final_outputs request")
+        print(f"Claim packet data keys: {claim_packet_data.keys()}")
+        print(f"Validation data keys: {validation_data.keys()}")
         
         # Convert to Pydantic models
         claim_packet = ClaimPacket(**claim_packet_data)
         validation = ClaimValidation(**validation_data)
         
-        print(f"🎁 Generating comprehensive claim package for {claim_packet.claim_id}")
-        print(f"📄 Number of documents: {len(claim_packet.documents)}")
+        print(f"Generating comprehensive claim package for {claim_packet.claim_id}")
+        print(f"Number of documents: {len(claim_packet.documents)}")
         
-        # Generate COMPREHENSIVE CLAIM PACKAGE (ZIP file with all documents)
+        # zip with all the claim documents
         comprehensive_package_path = await generate_comprehensive_claim_package(
             claim_packet, 
             validation,
@@ -1081,7 +1081,7 @@ async def generate_final_outputs(request: Dict[str, Any]):
         base_url = os.getenv("API_BASE_URL", "https://kava-backend.onrender.com")
         verification_url = f"{base_url}/api/verify-proof/{claim_hash[:16]}"
         
-        # 💾 UPDATE DATABASE WITH FINAL OUTPUTS
+        # update database with final outputs
         from database import ClaimRecord, SessionLocal
         db = SessionLocal()
         try:
@@ -1091,11 +1091,11 @@ async def generate_final_outputs(request: Dict[str, Any]):
                 claim_record.proof_card = proof_card
                 claim_record.updated_at = datetime.now()
                 db.commit()
-                print(f"💾 Final outputs saved to database")
+                print(f"Final outputs saved to database")
             else:
-                print(f"⚠️ Claim {claim_packet.claim_id} not found in database")
+                print(f"Claim {claim_packet.claim_id} not found in database")
         except Exception as db_error:
-            print(f"⚠️ Database update failed: {db_error}")
+            print(f"Database update failed: {db_error}")
             db.rollback()
         finally:
             db.close()
